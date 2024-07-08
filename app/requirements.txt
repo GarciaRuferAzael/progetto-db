@@ -1,1 +1,5 @@
 flask
+Flask-WTF
+email_validator
+PyMySQL
+python-dotenv
