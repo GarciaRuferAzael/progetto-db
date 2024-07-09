@@ -17,10 +17,11 @@ header h1 {
     font-size: 1.5em;
     font-weight: bold;
     letter-spacing: 1px;
-} 
+}
 
-.container {
-    max-width: 600px;
+.half-container {
+    width: 50%;
+    margin: auto;
 }
 
 .form-group input {
@@ -59,4 +60,17 @@ header h1 {
     background-color: #d1ecf1;
     border-color: #bee5eb;
     color: #0c5460;
+}
+
+.card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.card-text {
+    font-size: 1rem;
 }

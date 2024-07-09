@@ -5,16 +5,18 @@
 {% endblock %}
 
 {% block content %}
-<form action="{{ url_for('client.login') }}" method="POST">
-    {{ form.hidden_tag() }}
-    <div class="form-group">
-        {{ form.email.label(class="form-label") }}
-        {{ form.email(class="form-control") }}
-    </div>
-    <div class="form-group">
-        {{ form.password.label(class="form-label") }}
-        {{ form.password(class="form-control") }}
-    </div>
-    <button type="submit" class="btn btn-custom btn-block">{{ form.submit.label.text }}</button>
-</form>
+<div class="half-container">
+    <form action="{{ url_for('client.login') }}" method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.email.label(class="form-label") }}
+            {{ form.email(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.password.label(class="form-label") }}
+            {{ form.password(class="form-control") }}
+        </div>
+        <button type="submit" class="btn btn-custom btn-block">{{ form.submit.label.text }}</button>
+    </form>
+</div>
 {% endblock %}
