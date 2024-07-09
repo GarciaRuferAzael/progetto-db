@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+    {% if g.user %}
+    <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('employee.dashboard') }}">Dashboard</a>
+        </li>
+    </ul>
+    {% endif %}
+{% endblock %}

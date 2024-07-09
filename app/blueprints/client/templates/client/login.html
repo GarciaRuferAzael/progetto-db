@@ -1,11 +1,11 @@
-{% extends 'base.html' %}
+{% extends 'client_base.html' %}
 
 {% block header %}
-<h1>{% block title %}Login{% endblock %}</h1>
+<h1>{% block title %}Login Cliente{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
-<form action="{{ url_for('login') }}" method="POST">
+<form action="{{ url_for('client.login') }}" method="POST">
     {{ form.hidden_tag() }}
     <div class="form-group">
         {{ form.email.label(class="form-label") }}

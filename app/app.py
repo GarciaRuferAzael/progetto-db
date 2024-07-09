@@ -1,36 +1,20 @@
-from flask import Flask, flash, redirect, render_template, request, url_for
+from flask import Flask, render_template
 from dotenv import load_dotenv
 import os
 
-from db.user import find_user
-from forms import LoginForm
+from blueprints.client import client_page
+from blueprints.employee import employee_page
+from blueprints.director import director_page
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
+app.register_blueprint(client_page, url_prefix="/cliente/")
+app.register_blueprint(employee_page, url_prefix="/bancario/")
+app.register_blueprint(director_page, url_prefix="/direttore/")
+
 @app.route("/")
 def index():
-    return redirect(url_for('login'))
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    
-    if request.method == 'POST':
-        if form.validate_on_submit():
-            email = form.email.data
-            password = form.password.data
-            
-            user = find_user(email, password)
-            if user:
-                flash('Login successful!', 'success')
-                return redirect(url_for('index'))
-            else:
-                flash('Invalid email or password', 'danger')
-        
-        flash('Login successful!', 'success')
-        return redirect(url_for('index'))
-    
-    return render_template('auth/login.html', title='Login', form=form)
+    return render_template('index.html')
