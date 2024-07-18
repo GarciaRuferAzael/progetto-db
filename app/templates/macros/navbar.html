@@ -1,0 +1,9 @@
+{% macro navbar(routes) %}
+<ul class="navbar-nav m-auto">
+    {% for endpoint, url in routes %}
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == endpoint %}font-weight-bold{% endif %}" href="{{ url }}">{{ endpoint.split('.')[-1].capitalize() }}</a>
+    </li>
+    {% endfor %}
+</ul>
+{% endmacro %}

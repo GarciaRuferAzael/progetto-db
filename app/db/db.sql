@@ -1,0 +1,1 @@
+INSERT INTO `banca`.`clienti` (`email`, `password`, `codice_fiscale`, `name`, `cognome`, `data_nascita`, `indirizzo`, `telefono`) VALUES ('giacomo@mail.com', '24326224313224594f35482f6e6e412f7746496353474d43487165344f7a63736a614e31307a724d7a32394b526e686b4f5461453635577256756147', 'RNTGCM03T31H294F', 'Giacomo', 'Arienti', '2003-12-31', 'via Oltremare 4, Rimini', '3664213607');

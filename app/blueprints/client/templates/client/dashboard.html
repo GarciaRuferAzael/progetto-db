@@ -1,7 +1,7 @@
 {% extends 'client_base.html' %}
 
 {% block header %}
-<h1>{% block title %}Dashboard Cliente{% endblock %}</h1>
+<h1>{% block title %}Dashboard {{session.get('client')["nome"]}}{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}

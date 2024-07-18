@@ -1,5 +1,6 @@
 flask
 Flask-WTF
 email_validator
-PyMySQL
-python-dotenv
+PyMySQL[rsa]
+Flask-SQLAlchemy
+bcrypt

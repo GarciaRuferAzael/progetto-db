@@ -74,3 +74,13 @@ header h1 {
 .card-text {
     font-size: 1rem;
 }
+
+.flex-flow-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.w-48 {
+    width: 48%;
+}

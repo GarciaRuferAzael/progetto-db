@@ -1,17 +1,17 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
-from forms import LoginForm
+from .forms import LoginForm
 
 
 director_page = Blueprint('director', __name__, template_folder="templates/director")
 
 @director_page.route('/login', methods=['GET', 'POST'])
 def login():
-    form = LoginForm()
+    login_form = LoginForm()
     
     if request.method == 'POST':
-        if form.validate_on_submit():
-            email = form.email.data
-            password = form.password.data
+        if login_form.validate_on_submit():
+            email = login_form.email.data
+            password = login_form.password.data
             
             # user = find_user(email, password)
             # if user:
@@ -23,4 +23,4 @@ def login():
         flash('Login successful!', 'success')
         return redirect(url_for('index'))
     
-    return render_template('login.html', form=form)
+    return render_template('login.html', login_form=login_form)
