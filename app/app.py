@@ -15,6 +15,11 @@ if app.debug:
 
 app.secret_key = os.getenv('SECRET_KEY')
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+app.config["UPLOAD_FOLDER"] = os.getenv("UPLOAD_FOLDER")
+
+# check if path exists
+if not os.path.exists(app.config["UPLOAD_FOLDER"]):
+    os.makedirs(app.config["UPLOAD_FOLDER"])
 
 db.init_app(app)
 

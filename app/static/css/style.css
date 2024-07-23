@@ -19,6 +19,11 @@ header h1 {
     letter-spacing: 1px;
 }
 
+h3 {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
 .half-container {
     width: 50%;
     margin: auto;
@@ -83,4 +88,8 @@ header h1 {
 
 .w-48 {
     width: 48%;
+}
+
+.form-control > li > label {
+    display: none;
 }

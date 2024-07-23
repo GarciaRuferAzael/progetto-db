@@ -1,11 +1,11 @@
 import bcrypt
 from sqlalchemy import Date, Integer, String
 from sqlalchemy.schema import Column
-
+from sqlalchemy.orm import relationship
 from db.serializer import Serializer
 from . import db
 
-class Client(db.Model, Serializer):
+class Cliente(db.Model, Serializer):
     __tablename__ = "clienti"
      
     id = Column('id', Integer, primary_key=True)
@@ -18,13 +18,19 @@ class Client(db.Model, Serializer):
     indirizzo = Column('indirizzo', String(length=64))
     telefono = Column('telefono', String(length=16))
     
+    prestiti = relationship('Prestito', lazy=True)
+    mutui = relationship('Mutuo', lazy=True)
+    
     def __repr__(self):
-        return f"<Client {self.id}>"
+        return f"<Cliente {self.id}>"
     
         
     def serialize(self):
         d = Serializer.serialize(self)
         del d['password']
+        # do not serialize relationships
+        del d['prestiti']
+        del d['mutui']
         return d
     
     def verify_password(self, password: str):

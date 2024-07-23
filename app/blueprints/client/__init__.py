@@ -1,9 +1,12 @@
-from datetime import date, datetime
 from flask import Blueprint, flash, redirect, render_template, request, url_for, session
+from datetime import date, datetime
 from sqlalchemy import select
 from db import db
-from db.client import Client
-from .forms import LoginForm, AccountForm
+from db.prestito import Prestito
+from db.cliente import Cliente
+from db.garanzia import Garanzia
+from utils.storage import save_file
+from .forms import LoginForm, AccountForm, PrestitoForm
 
 
 client_page = Blueprint('client', __name__, template_folder="templates/client")
@@ -17,8 +20,7 @@ def login():
             email = login_form.email.data
             password = login_form.password.data
             
-            stmt = select(Client).where(Client.email == email)
-            client = db.session.scalar(stmt)
+            client = Cliente.query.filter_by(email=email).first()
         
             if client:
                 # check if the password is correct
@@ -48,9 +50,45 @@ def dashboard():
     ]
     return render_template('dashboard.html', conti=conto_corrente_info)
 
-@client_page.route('/prestiti', methods=['GET'])
+@client_page.route('/prestiti', methods=['GET', 'POST'])
 def prestiti():
-    return render_template('prestiti.html')
+    form = PrestitoForm()
+    
+    if form.validate_on_submit():
+        # create the prestito
+        prestito = Prestito()
+        prestito.importo = form.importo.data
+        prestito.cliente_id = session['client']['id']
+        
+        db.session.add(prestito)
+        db.session.commit()
+        
+        # create each garanzia
+        for garanzia in form.garanzie:
+            g = Garanzia()
+            g.tipologia = garanzia.tipologia.data
+            g.valutazione = garanzia.valutazione.data
+            g.prestito_id = prestito.id
+            
+            # save the file
+            file = garanzia.file.data
+            path = save_file(file)
+            
+            # set the file path
+            g.file = path # type: ignore
+            
+            db.session.add(g)
+            
+        try:
+            db.session.commit()
+            flash('Richiesta di prestito salvata con successo.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error durante il salvataggio: {e}')
+            
+    prestiti = Prestito.query.filter_by(cliente_id=session['client']['id']).all()
+        
+    return render_template('prestiti.html', prestito_form=form, prestiti=prestiti)
 
 @client_page.route('/carte', methods=['GET'])
 def carte():
@@ -74,7 +112,7 @@ def account():
             id = session["client"]["id"]
             
             # find client
-            stmt = select(Client).where(Client.id == id)
+            stmt = select(Cliente).where(Cliente.id == id)
             client = db.session.scalar(stmt)
             
             if not client:

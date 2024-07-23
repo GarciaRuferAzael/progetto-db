@@ -1,10 +1,140 @@
 {% extends 'client_base.html' %}
+{% from 'macros/form.html' import form %}
 
 {% block header %}
 <h1>{% block title %}Prestiti{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
-<div class="d-flex flex-row flex-wrap justify-content-center">
+<div class="container">
+    <!-- Display Prestiti -->
+    {% if prestiti %}
+    <div class="row mb-5">
+        {% for prestito in prestiti %}
+        <div class="col-12 col-md-6 col-lg-4 d-flex align-items-stretch mb-4 justify-content-center">
+            <div class="card" style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">Prestito ID: {{ prestito.id }}</h5>
+                    <p class="card-text">Importo: &euro;{{ prestito.importo }}</p>
+                    <p class="card-text">Data Creazione: {{ prestito.data_creazione.strftime('%Y-%m-%d') }}</p>
+                    
+                    <!-- display the garanzie -->
+                    <p class="card-text">Garanzie:</p>
+                    <ul>
+                        {% for garanzia in prestito.garanzie %}
+                        <li>{{ garanzia.tipologia }} - &euro;{{ garanzia.valutazione }}</li>
+                        {% endfor %}
+                    </ul>
+                    
+                    {% if prestito.accettata is true %}
+                    <p class="card-text text-success">Status: Accettata</p>
+                    <p class="card-text">Data Accettazione: {{ prestito.data_accettazione.strftime('%Y-%m-%d') }}</p>
+                    {% elif prestito.accettata is false %}
+                    <p class="card-text text-danger">Status: Respinta</p>
+                    {% else %}
+                    <p class="card-text text-warning">Status: In attesa</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Request a Prestito -->
+    <div class="d-flex flex-row flex-wrap justify-content-center">
+        <!-- button, it should open a model to request a new prestito -->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newPrestitoModal">
+            Richiedi prestito
+        </button>
+
+        <!-- modal to request a new prestito -->
+        <div class="modal fade" id="newPrestitoModal" tabindex="-1" role="dialog"
+            aria-labelledby="newPrestitoModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="newPrestitoModalLabel">Nuovo prestito</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        {{ form(prestito_form, 'client.prestiti', enctype="multipart/form-data",
+                        form_class="flex-flow-wrap", hide_submit_btn=true) }}
+                        <button type="button" id="add-garanzia-btn" class="btn btn-md">Aggiungi Garanzia</button>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Chiudi</button>
+                        <button type="submit" id="submit-request" class="btn btn-primary">Richiedi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const addGaranziaBtn = document.getElementById("add-garanzia-btn");
+        const garanzieList = document.querySelector("#garanzie");
+        const submitBtn = document.getElementById("submit");
+        const submitRequest = document.getElementById("submit-request");
+        let index = {{ prestito_form.garanzie| length }};
+
+        // Function to create the delete button
+        function createDeleteButton() {
+            const deleteBtn = document.createElement("button");
+            deleteBtn.type = "button";
+            deleteBtn.className = "btn btn-sm";
+            deleteBtn.textContent = "Rimuovi";
+            deleteBtn.onclick = function () {
+                this.closest("li").remove();
+            };
+            return deleteBtn;
+        }
+
+        addGaranziaBtn.addEventListener("click", function () {
+            console.log("Add Garanzia button clicked");
+            // Clone the first garanzia entry
+            const newGaranzia = garanzieList.children[0].cloneNode(true);
+
+            // Update the input names and ids
+            newGaranzia.querySelectorAll("input, label").forEach(function (input) {
+                if (input.hasAttribute("name")) {
+                    const name = input.getAttribute("name").replace(/\d+/, index);
+                    input.setAttribute("name", name);
+                }
+                if (input.hasAttribute("id")) {
+                    const id = input.getAttribute("id").replace(/\d+/, index);
+                    input.setAttribute("id", id);
+                }
+                if (input.tagName.toLowerCase() === "input") {
+                    input.value = "";
+                }
+            });
+
+            // Append delete button to the new entry
+            newGaranzia.appendChild(createDeleteButton());
+
+            // Add Bootstrap class for top border
+            newGaranzia.classList.add("border-top", "pt-4", "mt-2");
+
+            garanzieList.appendChild(newGaranzia);
+            index++;
+        });
+
+        submitRequest.addEventListener("click", function () {
+            submitBtn.click();
+        });
+
+        // Check if the prestito_form has values or errors
+        const hasValuesOrErrors = {{ (prestito_form.errors | length > 0) | tojson }};
+        if (hasValuesOrErrors) {
+            $('#newPrestitoModal').modal('show');
+        }
+    });
+</script>
 {% endblock %}

@@ -1,5 +1,5 @@
-{% macro form(form, endpoint, form_class="", group_class="", default_values={}) %}
-<form action="{{ url_for(endpoint) }}" class="{{ form_class }}" method="POST">
+{% macro form(form, endpoint, enctype="", form_class="", group_class="", hide_submit_btn=false, default_values={}) %}
+<form enctype="{{enctype}}" action="{{ url_for(endpoint) }}" class="{{ form_class }}" method="POST">
     {{ form.hidden_tag() }}
     {% for field in form %}
         {% if field.type != 'CSRFTokenField' and field.type != 'SubmitField' %}
@@ -16,6 +16,8 @@
             </div>
         {% endif %}
     {% endfor %}
-    {{ form.submit(class="btn btn-custom btn-block") }}
+    {% if form.submit %}
+        {{ form.submit(class="d-none" if hide_submit_btn else "btn btn-custom btn-block") }}
+    {% endif %}
 </form>
 {% endmacro %}

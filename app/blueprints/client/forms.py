@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import DateField, StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Email, Length
+from wtforms import DateField, FieldList, FormField, IntegerField, StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Email, Length, NumberRange
+from flask_wtf.file import FileField, FileRequired, FileAllowed
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -17,3 +18,13 @@ class AccountForm(FlaskForm):
     indirizzo = StringField('Indirizzo', validators=[DataRequired()])
     telefono = StringField('Telefono', validators=[DataRequired()])
     submit = SubmitField('Modifica')
+    
+class GaranziaForm(FlaskForm):
+    tipologia = StringField('Tipologia', validators=[DataRequired()])
+    file = FileField('File', validators=[FileRequired(), FileAllowed(['pdf', 'png', 'jpg', 'jpeg'], 'Solo file pdf e immagini')])
+    valutazione = IntegerField('Valutazione', validators=[DataRequired(), NumberRange(min=0)])
+
+class PrestitoForm(FlaskForm):
+    importo = IntegerField('Importo', validators=[DataRequired(), NumberRange(min=0, max=10000)])
+    garanzie = FieldList(FormField(GaranziaForm), min_entries=1, render_kw={'style':'list-style-type: none;'})
+    submit = SubmitField('Richiedi')

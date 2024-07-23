@@ -7,7 +7,16 @@
 
 {% block content %}
 <div class="half-container">
-    {{ form(account_form, 'client.account', form_class="flex-flow-wrap", group_class="w-48",
-    default_values=session["client"]) }}
+    <div class="container">
+        <h3>Edit account</h3>
+        {{ form(account_form, 'client.account', form_class="flex-flow-wrap", group_class="w-48",
+        default_values=session["client"]) }}
+    </div>
+
+    <!-- logout button -->
+    <div class="container mt-5">
+        <h3>Actions</h3>
+        <a href="{{ url_for('client.logout') }}" class="btn btn-danger w-100">Logout</a>
+    </div>
 </div>
 {% endblock %}
