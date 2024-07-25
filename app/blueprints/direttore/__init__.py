@@ -2,9 +2,9 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from .forms import LoginForm
 
 
-employee_page = Blueprint('employee', __name__, template_folder="templates/employee")
+director_page = Blueprint('direttore', __name__, template_folder="templates/direttore")
 
-@employee_page.route('/login', methods=['GET', 'POST'])
+@director_page.route('/login', methods=['GET', 'POST'])
 def login():
     login_form = LoginForm()
     

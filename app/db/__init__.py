@@ -50,6 +50,7 @@ class Cliente(db.Model, Serializer):
     data_nascita = Column('data_nascita', Date())
     indirizzo = Column('indirizzo', String(length=64))
     telefono = Column('telefono', String(length=16))
+    bancario_id = Column('bancario_id', Integer, ForeignKey("bancari.id"), nullable=True)
 
     prestiti = relationship('Prestito', lazy=True, back_populates="cliente")
     mutui = relationship('Mutuo', lazy=True, back_populates="cliente")
@@ -57,6 +58,7 @@ class Cliente(db.Model, Serializer):
         'ContoCorrente', primaryjoin=or_(ContoCorrente.client1_id == id, ContoCorrente.client2_id == id), lazy=True
     )
     richieste_conti_correnti = relationship('RichiestaContoCorrente', lazy=True, back_populates="cliente")
+    bancario = relationship('Bancario', lazy=True, back_populates="clienti")
 
     def __repr__(self):
         return f"<Cliente {self.id}>"
@@ -156,3 +158,37 @@ class RichiestaContoCorrente(db.Model):
 
     def __repr__(self):
         return f"<RichiestaContoCorrente {self.id}>"
+    
+
+class Bancario(db.Model, Serializer):
+    __tablename__ = "bancari"
+
+    id = Column('id', Integer, primary_key=True)
+    email = Column('email', String(length=32), unique=True)
+    password = Column('password', String(length=120))
+    codice_fiscale = Column('codice_fiscale', String(length=16), unique=True)
+    nome = Column('nome', String(length=32))
+    cognome = Column('cognome', String(length=32))
+    data_nascita = Column('data_nascita', Date())
+    indirizzo = Column('indirizzo', String(length=64))
+    telefono = Column('telefono', String(length=16))
+
+    clienti = relationship('Cliente', lazy=True)
+
+    def __repr__(self):
+        return f"<Bancario {self.id}>"
+
+    def serialize(self):
+        d = Serializer.serialize(self)
+        del d['password']
+        return d
+
+    def verify_password(self, password: str):
+        return bcrypt.checkpw(
+            password.encode(),
+            bytes.fromhex(self.__getattribute__('password'))
+        )
+
+    def set_password(self, password: str):
+        self.password = bcrypt.hashpw(
+            password.encode(), bcrypt.gensalt()).hex()

@@ -4,3 +4,4 @@ email_validator
 PyMySQL[rsa]
 Flask-SQLAlchemy
 bcrypt
+alembic

@@ -8,7 +8,7 @@ from utils.storage import save_file
 from .forms import LoginForm, AccountForm, PrestitoForm
 
 
-client_page = Blueprint('client', __name__, template_folder="templates/client")
+client_page = Blueprint('cliente', __name__, template_folder="templates/cliente")
 
 
 @client_page.route('/login', methods=['GET', 'POST'])
@@ -21,14 +21,14 @@ def login():
             email = login_form.email.data
             password = login_form.password.data
 
-            client = Cliente.query.filter_by(email=email).first()
+            cliente = Cliente.query.filter_by(email=email).first()
 
-            if client:
+            if cliente:
                 # check if the password is correct
-                if client.verify_password(password):
+                if cliente.verify_password(password):
                     flash('Login successful!', 'success')
-                    session['client'] = client.serialize()
-                    return redirect(url_for('client.dashboard'))
+                    session['cliente'] = cliente.serialize()
+                    return redirect(url_for('cliente.dashboard'))
 
                 flash('Invalid email or password', 'danger')
             else:
@@ -40,20 +40,20 @@ def login():
 @client_page.route('/logout', methods=['GET'])
 @client_auth_required
 def logout():
-    session.pop('client', None)
-    return redirect(url_for('client.login'))
+    session.pop('cliente', None)
+    return redirect(url_for('cliente.login'))
 
 
 @client_page.route('/dashboard', methods=['GET'])
 @client_auth_required
 def dashboard():
     richieste_in_attesa = RichiestaContoCorrente.query.filter(
-        RichiestaContoCorrente.cliente_id == session['client']['id'],
+        RichiestaContoCorrente.cliente_id == session['cliente']['id'],
         RichiestaContoCorrente.accettata == None
     ).count()
     conti_correnti = ContoCorrente.query.filter(
-        (ContoCorrente.client1_id == session['client']['id']) | (
-            ContoCorrente.client2_id == session['client']['id'])
+        (ContoCorrente.client1_id == session['cliente']['id']) | (
+            ContoCorrente.client2_id == session['cliente']['id'])
     ).all()
 
     return render_template(
@@ -67,7 +67,7 @@ def dashboard():
 def richiesta_conto_corrente():
     if request.method == 'POST':
         richiesta = RichiestaContoCorrente()
-        richiesta.cliente_id = session['client']['id']
+        richiesta.cliente_id = session['cliente']['id']
         db.session.add(richiesta)
 
         try:
@@ -77,7 +77,7 @@ def richiesta_conto_corrente():
             db.session.rollback()
             flash(f'Error durante l\'invio della richiesta: {e}', 'error')
 
-    return redirect(url_for('client.dashboard'))
+    return redirect(url_for('cliente.dashboard'))
 
 @client_page.route('/conto_corrente', methods=['POST'])
 @client_auth_required
@@ -85,14 +85,14 @@ def conto_corrente():
     if request.method == 'POST':
         email = request.form.get('email')
         stmt = select(Cliente).where(Cliente.email == email)
-        client = db.session.scalar(stmt)
-        if not client:
+        cliente = db.session.scalar(stmt)
+        if not cliente:
             flash('Utente non trovato.', 'danger')
-            return redirect(url_for('client.dashboard'))
+            return redirect(url_for('cliente.dashboard'))
 
-        # add user as second client
+        # add user as second cliente
         stmt = select(ContoCorrente).where(
-            ContoCorrente.client1_id == session['client']['id']
+            ContoCorrente.client1_id == session['cliente']['id']
         ).where(
             ContoCorrente.id == request.form.get('id')
         )
@@ -100,9 +100,9 @@ def conto_corrente():
 
         if not conto_corrente:
             flash('Conto corrente non trovato.', 'danger')
-            return redirect(url_for('client.dashboard'))
+            return redirect(url_for('cliente.dashboard'))
 
-        conto_corrente.client2_id = client.id
+        conto_corrente.client2_id = cliente.id
         db.session.add(conto_corrente)
         
         try:
@@ -112,7 +112,7 @@ def conto_corrente():
             db.session.rollback()
             flash(f'Error durante l\'aggiornamento: {e}', 'error')
 
-    return redirect(url_for('client.dashboard'))
+    return redirect(url_for('cliente.dashboard'))
 
 
 @client_page.route('/prestiti', methods=['GET', 'POST'])
@@ -124,7 +124,7 @@ def prestiti():
         # create the prestito
         prestito = Prestito()
         prestito.importo = form.importo.data
-        prestito.cliente_id = session['client']['id']
+        prestito.cliente_id = session['cliente']['id']
 
         db.session.add(prestito)
         db.session.commit()
@@ -153,7 +153,7 @@ def prestiti():
             flash(f'Error durante il salvataggio: {e}')
 
     prestiti = Prestito.query.filter_by(
-        cliente_id=session['client']['id']).all()
+        cliente_id=session['cliente']['id']).all()
 
     return render_template('prestiti.html', prestito_form=form, prestiti=prestiti)
 
@@ -177,37 +177,37 @@ def account():
 
     # transform date format
     data_nascita = datetime.strptime(
-        session["client"]["data_nascita"], '%a, %d %b %Y %H:%M:%S %Z')
+        session["cliente"]["data_nascita"], '%a, %d %b %Y %H:%M:%S %Z')
     data_nascita = date(data_nascita.year,
                         data_nascita.month, data_nascita.day)
-    session["client"]["data_nascita"] = data_nascita
+    session["cliente"]["data_nascita"] = data_nascita
 
     if request.method == 'POST':
         if form.validate_on_submit():
-            id = session["client"]["id"]
+            id = session["cliente"]["id"]
 
-            # find client
+            # find cliente
             stmt = select(Cliente).where(Cliente.id == id)
-            client = db.session.scalar(stmt)
+            cliente = db.session.scalar(stmt)
 
-            if not client:
-                return redirect(url_for('client.logout'))
+            if not cliente:
+                return redirect(url_for('cliente.logout'))
 
-            # update the client's information with form data
-            client.codice_fiscale = form.codice_fiscale.data
-            client.nome = form.nome.data
-            client.cognome = form.cognome.data
-            client.data_nascita = form.data_nascita.data
-            client.indirizzo = form.indirizzo.data
-            client.telefono = form.telefono.data
+            # update the cliente's information with form data
+            cliente.codice_fiscale = form.codice_fiscale.data
+            cliente.nome = form.nome.data
+            cliente.cognome = form.cognome.data
+            cliente.data_nascita = form.data_nascita.data
+            cliente.indirizzo = form.indirizzo.data
+            cliente.telefono = form.telefono.data
 
             if form.password.data:
-                client.set_password(form.password.data)
+                cliente.set_password(form.password.data)
 
             # commit the changes to the database
             try:
                 db.session.commit()
-                session["client"] = client.serialize()
+                session["cliente"] = cliente.serialize()
                 flash('Account aggiornato con successo.', 'success')
             except Exception as e:
                 db.session.rollback()

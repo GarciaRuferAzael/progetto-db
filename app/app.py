@@ -3,9 +3,9 @@ import os
 
 from db import db
 
-from blueprints.client import client_page
-from blueprints.employee import employee_page
-from blueprints.director import director_page
+from blueprints.cliente import client_page
+from blueprints.bancario import bancario_page
+from blueprints.direttore import director_page
 
 app = Flask(__name__)
 
@@ -24,7 +24,7 @@ if not os.path.exists(app.config["UPLOAD_FOLDER"]):
 db.init_app(app)
 
 app.register_blueprint(client_page, url_prefix="/cliente/")
-app.register_blueprint(employee_page, url_prefix="/bancario/")
+app.register_blueprint(bancario_page, url_prefix="/bancario/")
 app.register_blueprint(director_page, url_prefix="/direttore/")
 
 
@@ -43,17 +43,17 @@ def get_routes_for(name: str):
 
 @app.context_processor
 def client_routes():
-    routes = get_routes_for('client')
+    routes = get_routes_for('cliente')
     return dict(client_routes=routes)
 
 
 @app.context_processor
-def employee_routes():
-    routes = get_routes_for('employee')
-    return dict(employee_routes=routes)
+def bancario_routes():
+    routes = get_routes_for('bancario')
+    return dict(bancario_routes=routes)
 
 
 @app.context_processor
 def director_routes():
-    routes = get_routes_for('director')
+    routes = get_routes_for('direttore')
     return dict(director_routes=routes)

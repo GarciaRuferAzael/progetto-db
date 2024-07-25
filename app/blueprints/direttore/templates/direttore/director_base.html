@@ -2,7 +2,7 @@
 {% from 'macros/navbar.html' import navbar %}
 
 {% block navbar %}
-{% if session.get('client') %}
-    {{ navbar(client_routes) }}
+{% if session.get('direttore') %}
+    {{ navbar(director_routes) }}
 {% endif %}
 {% endblock %}
