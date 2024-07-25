@@ -36,7 +36,7 @@ def index():
 def get_routes_for(name: str):
     client_routes = []
     for rule in app.url_map.iter_rules():
-        if rule.endpoint.startswith(f'{name}.') and rule.endpoint.split('.')[1] not in ['login', 'logout']:
+        if rule.endpoint.startswith(f'{name}.') and rule.endpoint.split('.')[1] not in ['login', 'logout'] and rule.methods and "GET" in rule.methods:
             client_routes.append((rule.endpoint, rule.rule))
     return client_routes
 
