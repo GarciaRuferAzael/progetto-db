@@ -4,7 +4,7 @@ from db import Bancario
 from .forms import LoginForm
 
 
-bancario_page = Blueprint('bancario', __name__, template_folder="templates/bancario")
+bancario_page = Blueprint('bancario', __name__, template_folder="templates")
 
 @bancario_page.route('/login', methods=['GET', 'POST'])
 def login():
@@ -28,4 +28,13 @@ def login():
             else:
                 flash('Invalid email or password', 'danger')
 
-    return render_template('login.html', login_form=login_form)
+    return render_template('bancario/login.html', login_form=login_form)
+
+@bancario_page.route('/dashboard', methods=['GET'])
+def logout():
+    session.pop('bancario', None)
+    return redirect(url_for('bancario.login'))
+
+@bancario_page.route('/dashboard', methods=['GET'])
+def dashboard():
+    return render_template('bancario/dashboard.html')

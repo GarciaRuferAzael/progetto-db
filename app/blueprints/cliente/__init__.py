@@ -8,7 +8,7 @@ from utils.storage import save_file
 from .forms import LoginForm, AccountForm, PrestitoForm
 
 
-client_page = Blueprint('cliente', __name__, template_folder="templates/cliente")
+client_page = Blueprint('cliente', __name__, template_folder="templates")
 
 
 @client_page.route('/login', methods=['GET', 'POST'])
@@ -34,7 +34,7 @@ def login():
             else:
                 flash('Invalid email or password', 'danger')
 
-    return render_template('login.html', login_form=login_form)
+    return render_template('cliente/login.html', login_form=login_form)
 
 
 @client_page.route('/logout', methods=['GET'])
@@ -57,7 +57,7 @@ def dashboard():
     ).all()
 
     return render_template(
-        'dashboard.html',
+        'cliente/dashboard.html',
         richieste_in_attesa=richieste_in_attesa,
         conti_correnti=conti_correnti
     )
@@ -155,19 +155,19 @@ def prestiti():
     prestiti = Prestito.query.filter_by(
         cliente_id=session['cliente']['id']).all()
 
-    return render_template('prestiti.html', prestito_form=form, prestiti=prestiti)
+    return render_template('cliente/prestiti.html', prestito_form=form, prestiti=prestiti)
 
 
 @client_page.route('/carte', methods=['GET'])
 @client_auth_required
 def carte():
-    return render_template('carte.html')
+    return render_template('cliente/carte.html')
 
 
 @client_page.route('/azioni', methods=['GET'])
 @client_auth_required
 def azioni():
-    return render_template('azioni.html')
+    return render_template('cliente/azioni.html')
 
 
 @client_page.route('/account', methods=['GET', 'POST'])
@@ -213,4 +213,4 @@ def account():
                 db.session.rollback()
                 flash(f'Error durante l\'aggiornamento: {e}', 'error')
 
-    return render_template('account.html', account_form=form)
+    return render_template('cliente/account.html', account_form=form)
