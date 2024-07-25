@@ -1,0 +1,38 @@
+{% extends 'bancario/bancario_base.html' %}
+
+{% block header %}
+<h1>{% block title %}Richieste{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div class="half-container">
+    <div class="row mb-5">
+        {% for richiesta in richieste %}
+        <div class="col-12 col-md-6 col-lg-5 d-flex align-items-stretch mb-4 justify-content-center">
+            <div class="card" style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">Richiesta N: {{ richiesta.id }}</h5>
+                    <p class="card-text">Cliente: {{ richiesta.cliente.nome }} {{ richiesta.cliente.cognome }}</p>
+                    <p class="card-text">Data Creazione: {{ richiesta.data_creazione.strftime('%Y-%m-%d') }}</p>
+
+                    <div class="d-flex flex-row justify-content-around">
+                        <form action="{{ url_for('bancario.accetta_richiesta', richiesta_id=richiesta.id) }}"
+                            method="post">
+                            <input type="hidden" name="richiesta_id" value="{{ richiesta.id }}">
+                            <input type="hidden" name="accettata" value="1">
+                            <button type="submit" class="btn btn-success">Accetta</button>
+                        </form>
+                        <form action="{{ url_for('bancario.accetta_richiesta', richiesta_id=richiesta.id) }}"
+                            method="post">
+                            <input type="hidden" name="richiesta_id" value="{{ richiesta.id }}">
+                            <input type="hidden" name="accettata" value="0">
+                            <button type="submit" class="btn btn-danger">Rifiuta</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

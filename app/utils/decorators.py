@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import session, redirect, url_for
 
-def client_auth_required(f):
+def cliente_auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('cliente'):
@@ -9,7 +9,7 @@ def client_auth_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def client_unauth_required(f):
+def cliente_unauth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if session.get('cliente'):
@@ -17,7 +17,7 @@ def client_unauth_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def employee_auth_required(f):
+def bancario_auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('bancario'):
@@ -25,10 +25,26 @@ def employee_auth_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def director_auth_required(f):
+def bancario_unauth_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('bancario'):
+            return redirect(url_for('bancario.dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def direttore_auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('direttore'):
             return redirect(url_for('direttore.login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def direttore_unauth_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('direttore'):
+            return redirect(url_for('direttore.dashboard'))
         return f(*args, **kwargs)
     return decorated_function

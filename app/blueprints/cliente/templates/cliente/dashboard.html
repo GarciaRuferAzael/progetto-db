@@ -14,11 +14,12 @@
     {% endif %}
 
     <!-- Conti Correnti -->
-    {% for conto in conti %}
+    {% for conto in conti_correnti %}
     <div class="card m-3" style="width: 18rem;">
         <div class="card-body">
             <h5 class="card-title">Conto Corrente {{ conto.id }}</h5>
-            <p class="card-text"><strong>Saldo conto:</strong> {{ conto.saldo_conto }}</p>
+            <p class="card-text"><strong>Filiale:</strong> {{conto.filiale.sede}}</p>
+            <p class="card-text"><strong>Saldo conto:</strong> {{ conto.saldo }}</p>
             <p class="card-text"><strong>Entrate / Uscite mese corrente:</strong> {{ conto.entrate_uscite_mese }}</p>
         </div>
     </div>

@@ -3,7 +3,7 @@ from datetime import date, datetime
 from sqlalchemy import select
 from db import ContoCorrente, RichiestaContoCorrente, db
 from db import Prestito, Cliente, Garanzia
-from utils.decorators import client_auth_required, client_unauth_required
+from utils.decorators import cliente_auth_required, cliente_unauth_required
 from utils.storage import save_file
 from .forms import LoginForm, AccountForm, PrestitoForm
 
@@ -12,7 +12,7 @@ client_page = Blueprint('cliente', __name__, template_folder="templates")
 
 
 @client_page.route('/login', methods=['GET', 'POST'])
-@client_unauth_required
+@cliente_unauth_required
 def login():
     login_form = LoginForm()
 
@@ -38,14 +38,14 @@ def login():
 
 
 @client_page.route('/logout', methods=['GET'])
-@client_auth_required
+@cliente_auth_required
 def logout():
     session.pop('cliente', None)
     return redirect(url_for('cliente.login'))
 
 
 @client_page.route('/dashboard', methods=['GET'])
-@client_auth_required
+@cliente_auth_required
 def dashboard():
     richieste_in_attesa = RichiestaContoCorrente.query.filter(
         RichiestaContoCorrente.cliente_id == session['cliente']['id'],
@@ -63,7 +63,7 @@ def dashboard():
     )
 
 @client_page.route('/richiesta_conto_corrente', methods=['POST'])
-@client_auth_required
+@cliente_auth_required
 def richiesta_conto_corrente():
     if request.method == 'POST':
         richiesta = RichiestaContoCorrente()
@@ -80,7 +80,7 @@ def richiesta_conto_corrente():
     return redirect(url_for('cliente.dashboard'))
 
 @client_page.route('/conto_corrente', methods=['POST'])
-@client_auth_required
+@cliente_auth_required
 def conto_corrente():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -116,7 +116,7 @@ def conto_corrente():
 
 
 @client_page.route('/prestiti', methods=['GET', 'POST'])
-@client_auth_required
+@cliente_auth_required
 def prestiti():
     form = PrestitoForm()
 
@@ -159,19 +159,19 @@ def prestiti():
 
 
 @client_page.route('/carte', methods=['GET'])
-@client_auth_required
+@cliente_auth_required
 def carte():
     return render_template('cliente/carte.html')
 
 
 @client_page.route('/azioni', methods=['GET'])
-@client_auth_required
+@cliente_auth_required
 def azioni():
     return render_template('cliente/azioni.html')
 
 
 @client_page.route('/account', methods=['GET', 'POST'])
-@client_auth_required
+@cliente_auth_required
 def account():
     form = AccountForm()
 

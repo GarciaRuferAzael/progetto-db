@@ -15,6 +15,20 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 
 
+class Filiale(db.Model):
+    __tablename__ = "filiali"
+
+    id = Column('id', Integer, primary_key=True)
+    saldo = Column('saldo', Integer, CheckConstraint('saldo >= 0'), default=0)
+    sede = Column('sede', String(length=64))
+
+    bancari = relationship('Bancario', lazy=True)
+    conti_correnti = relationship('ContoCorrente', lazy=True)
+
+    def __repr__(self):
+        return f"<Filiale {self.id}>"
+
+
 class ContoCorrente(db.Model):
     __tablename__ = "conti_correnti"
 
@@ -26,9 +40,14 @@ class ContoCorrente(db.Model):
     client2_id = Column(
         'cliente2_id', Integer, ForeignKey("clienti.id"), nullable=True
     )
+    filiale_id = Column('filiale_id', Integer, ForeignKey("filiali.id"))
 
-    client1 = relationship('Cliente', foreign_keys=[client1_id], lazy=True)
-    client2 = relationship('Cliente', foreign_keys=[client2_id], lazy=True)
+    client1 = relationship('Cliente', foreign_keys=[
+                           client1_id], back_populates='conti_correnti', lazy=True)
+    client2 = relationship('Cliente', foreign_keys=[
+                           client2_id], back_populates='conti_correnti', lazy=True)
+    filiale = relationship(
+        'Filiale', back_populates='conti_correnti', lazy=True)
 
     def __repr__(self):
         return f"<ContoCorrente {self.id}>"
@@ -50,14 +69,16 @@ class Cliente(db.Model, Serializer):
     data_nascita = Column('data_nascita', Date())
     indirizzo = Column('indirizzo', String(length=64))
     telefono = Column('telefono', String(length=16))
-    bancario_id = Column('bancario_id', Integer, ForeignKey("bancari.id"), nullable=True)
+    bancario_id = Column('bancario_id', Integer,
+                         ForeignKey("bancari.id"), nullable=True)
 
     prestiti = relationship('Prestito', lazy=True, back_populates="cliente")
     mutui = relationship('Mutuo', lazy=True, back_populates="cliente")
     conti_correnti = relationship(
-        'ContoCorrente', primaryjoin=or_(ContoCorrente.client1_id == id, ContoCorrente.client2_id == id), lazy=True
+        'ContoCorrente', primaryjoin=or_(ContoCorrente.client1_id == id, ContoCorrente.client2_id == id), lazy=True, viewonly=True
     )
-    richieste_conti_correnti = relationship('RichiestaContoCorrente', lazy=True, back_populates="cliente")
+    richieste_conti_correnti = relationship(
+        'RichiestaContoCorrente', lazy=True, back_populates="cliente")
     bancario = relationship('Bancario', lazy=True, back_populates="clienti")
 
     def __repr__(self):
@@ -100,6 +121,7 @@ class Mutuo(db.Model):
     def __repr__(self):
         return f"<Mutuo {self.id}>"
 
+
 class Prestito(db.Model):
     __tablename__ = "prestiti"
 
@@ -128,8 +150,10 @@ class Garanzia(db.Model):
     tipologia = Column('tiplogia', String(length=256))
     file = Column('file', String(length=256))
     valutazione = Column('valutazione', Integer)
-    prestito_id = Column('prestito_id', Integer, ForeignKey("prestiti.id"), nullable=True)
-    mutuo_id = Column('mutuo_id', Integer, ForeignKey("mutui.id"), nullable=True)
+    prestito_id = Column('prestito_id', Integer,
+                         ForeignKey("prestiti.id"), nullable=True)
+    mutuo_id = Column('mutuo_id', Integer,
+                      ForeignKey("mutui.id"), nullable=True)
 
     prestito = relationship('Prestito', back_populates="garanzie", lazy=True)
     mutuo = relationship('Mutuo', back_populates="garanzie", lazy=True)
@@ -141,6 +165,7 @@ class Garanzia(db.Model):
     def __repr__(self):
         return f"<Garanzia {self.id}>"
 
+
 class RichiestaContoCorrente(db.Model):
     __tablename__ = "richieste_conti_correnti"
 
@@ -149,16 +174,19 @@ class RichiestaContoCorrente(db.Model):
     data_accettazione = Column('data_accettazione', DateTime, nullable=True)
     accettata = Column('accettata', Boolean, nullable=True)
     cliente_id = Column('cliente_id', Integer, ForeignKey("clienti.id"))
+    bancario_id = Column('bancario_id', Integer, ForeignKey("bancari.id"))
 
-    cliente = relationship('Cliente', back_populates="richieste_conti_correnti", lazy=True)
-
+    cliente = relationship(
+        'Cliente', back_populates="richieste_conti_correnti", lazy=True)
+    bancario = relationship('Bancario', back_populates="richieste_conti_correnti", lazy=True)
+    
     # if accettata is true, data_accettazione should not be null
     CheckConstraint(
         'accettata = true AND data_accettazione IS NOT NULL OR accettata = false OR accettata IS NULL', name='check_accettata')
 
     def __repr__(self):
         return f"<RichiestaContoCorrente {self.id}>"
-    
+
 
 class Bancario(db.Model, Serializer):
     __tablename__ = "bancari"
@@ -172,8 +200,11 @@ class Bancario(db.Model, Serializer):
     data_nascita = Column('data_nascita', Date())
     indirizzo = Column('indirizzo', String(length=64))
     telefono = Column('telefono', String(length=16))
+    filiale_id = Column('filiale_id', Integer, ForeignKey("filiali.id"))
 
     clienti = relationship('Cliente', lazy=True)
+    filiale = relationship('Filiale', back_populates='bancari', lazy=True)
+    richieste_conti_correnti = relationship('RichiestaContoCorrente', lazy=True)
 
     def __repr__(self):
         return f"<Bancario {self.id}>"
