@@ -1,9 +1,10 @@
-from xmlrpc.client import boolean
+from datetime import date, datetime
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from sqlalchemy import select
 
-from db import ContoCorrente, db, Bancario, RichiestaContoCorrente
+from db import Cliente, ContoCorrente, db, Bancario, RichiestaContoCorrente
 from utils.decorators import bancario_auth_required, bancario_unauth_required
-from .forms import LoginForm
+from .forms import AccountForm, LoginForm
 
 
 bancario_page = Blueprint('bancario', __name__, template_folder="templates")
@@ -42,7 +43,10 @@ def logout():
 @bancario_page.route('/dashboard', methods=['GET'])
 @bancario_auth_required
 def dashboard():
-    return render_template('bancario/dashboard.html')
+    stmt = select(Cliente).where(Cliente.bancario_id == session['bancario']['id'])
+    clienti_private = db.session.execute(stmt).scalars().all()
+    
+    return render_template('bancario/dashboard.html', clienti_private=clienti_private)
 
 @bancario_page.route('/richieste', methods=['GET'])
 @bancario_auth_required
@@ -57,9 +61,6 @@ def accetta_richiesta():
     accettata = bool(request.form.get('accettata', type=int))
     richiesta = RichiestaContoCorrente.query.filter_by(id=richiesta_id).first()
 
-    print("Accettata", accettata)
-
-
     if richiesta:
         richiesta.accettata = accettata
         richiesta.data_accettazione = db.func.now()
@@ -71,6 +72,7 @@ def accetta_richiesta():
             conto = ContoCorrente()
             conto.client1_id = richiesta.cliente_id
             conto.filiale_id = session['bancario']['filiale_id']
+            conto.generate_iban()
             
             db.session.add(conto)
 
@@ -87,3 +89,52 @@ def accetta_richiesta():
         flash('Richiesta non trovata', 'danger')
 
     return redirect(url_for('bancario.richieste'))
+
+@bancario_page.route('/polizze', methods=['GET'])
+@bancario_auth_required
+def polizza():
+    return render_template('bancario/polizze.html')
+
+@bancario_page.route('/account', methods=['GET', 'POST'])
+def account():
+    form = AccountForm()
+    
+     # transform date format
+    data_nascita = datetime.strptime(
+        session["bancario"]["data_nascita"], '%a, %d %b %Y %H:%M:%S %Z')
+    data_nascita = date(data_nascita.year,
+                        data_nascita.month, data_nascita.day)
+    session["bancario"]["data_nascita"] = data_nascita
+
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            id = session["bancario"]["id"]
+
+            # find bancario
+            stmt = select(Bancario).where(Bancario.id == id)
+            bancario = db.session.scalar(stmt)
+
+            if not bancario:
+                return redirect(url_for('bancario.logout'))
+
+            # update the bancario's information with form data
+            bancario.codice_fiscale = form.codice_fiscale.data
+            bancario.nome = form.nome.data
+            bancario.cognome = form.cognome.data
+            bancario.data_nascita = form.data_nascita.data
+            bancario.indirizzo = form.indirizzo.data
+            bancario.telefono = form.telefono.data
+
+            if form.password.data:
+                bancario.set_password(form.password.data)
+
+            # commit the changes to the database
+            try:
+                db.session.commit()
+                session["bancario"] = bancario.serialize()
+                flash('Account aggiornato con successo.', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error durante l\'aggiornamento: {e}', 'error')
+    
+    return render_template('bancario/account.html', account_form=form)

@@ -1,0 +1,36 @@
+{% extends 'direttore/direttore_base.html' %}
+
+{% block header %}
+<h1>{% block title %}Dashboard{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div class="half-container">
+</div>
+<!-- Assigned Filiale -->
+<h3 class="mb-4">Filiale: {{ filiale.sede }}</h3>
+
+
+<!-- conti_correnti of the assigned Filiale -->
+<h3>Conti correnti</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>IBAN</th>
+            <th>Saldo</th>
+            <th>Cliente</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for conto_corrente in filiale.conti_correnti %}
+        <tr>
+            <td>{{ conto_corrente.iban }}</td>
+            <td>{{ conto_corrente.saldo }} &euro;</td>
+            <td>{{ conto_corrente.cliente1.nome }} {{ conto_corrente.cliente1.cognome }}{% if conto_corrente.cliente2 %},
+                {{ conto_corrente.cliente2.nome }} {{ conto_corrente.cliente2.cognome }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

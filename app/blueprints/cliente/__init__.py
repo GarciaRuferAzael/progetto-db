@@ -164,12 +164,6 @@ def carte():
     return render_template('cliente/carte.html')
 
 
-@client_page.route('/azioni', methods=['GET'])
-@cliente_auth_required
-def azioni():
-    return render_template('cliente/azioni.html')
-
-
 @client_page.route('/account', methods=['GET', 'POST'])
 @cliente_auth_required
 def account():

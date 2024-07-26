@@ -34,17 +34,17 @@ def index():
 
 
 def get_routes_for(name: str):
-    client_routes = []
+    routes = []
     for rule in app.url_map.iter_rules():
         if rule.endpoint.startswith(f'{name}.') and rule.endpoint.split('.')[1] not in ['login', 'logout'] and rule.methods and "GET" in rule.methods:
-            client_routes.append((rule.endpoint, rule.rule))
-    return client_routes
+            routes.append((rule.endpoint, rule.rule))
+    return routes
 
 
 @app.context_processor
-def client_routes():
+def cliente_routes():
     routes = get_routes_for('cliente')
-    return dict(client_routes=routes)
+    return dict(cliente_routes=routes)
 
 
 @app.context_processor
@@ -54,6 +54,6 @@ def bancario_routes():
 
 
 @app.context_processor
-def director_routes():
+def direttore_routes():
     routes = get_routes_for('direttore')
-    return dict(director_routes=routes)
+    return dict(direttore_routes=routes)

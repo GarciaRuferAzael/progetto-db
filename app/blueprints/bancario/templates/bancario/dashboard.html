@@ -6,6 +6,34 @@
 
 {% block content %}
 <div class="half-container">
-</div>
+    <!-- display each private client info -->
+    {% if clienti_private %}
+    <h5>Clienti private:</h5>
+    <div class="row mb-5">
+        <div class="col-12 col-md-6 col-lg-5 d-flex align-items-stretch mb-4 justify-content-center">
+            {% for cliente in clienti_private %}
+            <div class="card" style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">Cliente: {{ cliente.nome }} {{ cliente.cognome }}</h5>
+                    <p class="card-text">Telefono: {{ cliente.telefono }}</p>
+                    <p class="card-text">Email: {{ cliente.email }}</p>
+
+                    <!-- display conti info -->
+                    <h6 class="card-subtitle mb-2 text-muted">Conti Correnti</h6>
+                    <ul class="list-group pl-3">
+                        {% for conto in cliente.conti_correnti %}
+                        <li class="item">ID: {{ conto.id }} - Saldo: {{ conto.saldo }}&euro;</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="container">
+        <h5 class="text-center">Nessun cliente private</h5>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
