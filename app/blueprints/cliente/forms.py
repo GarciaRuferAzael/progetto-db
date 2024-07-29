@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import DateField, FieldList, FormField, IntegerField, StringField, PasswordField, SubmitField
+from wtforms import DateField, FieldList, FormField, HiddenField, IntegerField, StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, Length, NumberRange
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 
@@ -28,3 +28,10 @@ class PrestitoForm(FlaskForm):
     importo = IntegerField('Importo', validators=[DataRequired(), NumberRange(min=0, max=10000)])
     garanzie = FieldList(FormField(GaranziaForm), min_entries=1, render_kw={'style':'list-style-type: none;'})
     submit = SubmitField('Richiedi')
+    
+class BonificoForm(FlaskForm):
+    conto_corrente_id = HiddenField('Conto Corrente', validators=[DataRequired()])
+    importo = IntegerField('Importo', validators=[DataRequired(), NumberRange(min=0)])
+    iban_destinatario = StringField('IBAN Destinatario', validators=[DataRequired()])
+    causale = StringField('Causale')
+    submit = SubmitField('Invia')

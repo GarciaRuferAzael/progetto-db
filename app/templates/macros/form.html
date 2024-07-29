@@ -2,7 +2,7 @@
 <form enctype="{{enctype}}" action="{{ url_for(endpoint) }}" class="{{ form_class }}" method="POST">
     {{ form.hidden_tag() }}
     {% for field in form %}
-        {% if field.type != 'CSRFTokenField' and field.type != 'SubmitField' %}
+        {% if field.type != 'CSRFTokenField' and field.type != 'SubmitField' and field.type != "HiddenField" %}
             <div class="form-group {{ group_class }}">
                 {{ field.label(class="form-label") }}
                 {% if field.name in default_values %}

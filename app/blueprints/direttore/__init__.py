@@ -2,7 +2,8 @@ from datetime import date, datetime
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 from sqlalchemy import select
 
-from db import db, Direttore, get_conti_correnti_by_direttore_id
+from db import db, Direttore
+from db.query import get_conti_correnti_by_direttore_id
 from utils.decorators import direttore_auth_required, direttore_unauth_required
 from .forms import AccountForm, LoginForm
 

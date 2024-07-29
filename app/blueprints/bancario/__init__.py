@@ -70,7 +70,7 @@ def accetta_richiesta():
         if accettata:
             # create a new conto corrente
             conto = ContoCorrente()
-            conto.client1_id = richiesta.cliente_id
+            conto.cliente1_id = richiesta.cliente_id
             conto.filiale_id = session['bancario']['filiale_id']
             conto.generate_iban()
             

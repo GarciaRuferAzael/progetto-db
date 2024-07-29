@@ -33,27 +33,27 @@ def index():
     return render_template('index.html')
 
 
-def get_routes_for(name: str):
+def get_routes_for(name: str, routes_list: list[str]):
     routes = []
     for rule in app.url_map.iter_rules():
-        if rule.endpoint.startswith(f'{name}.') and rule.endpoint.split('.')[1] not in ['login', 'logout'] and rule.methods and "GET" in rule.methods:
+        if rule.endpoint.startswith(f'{name}.') and rule.endpoint.split('.')[1] in routes_list:
             routes.append((rule.endpoint, rule.rule))
     return routes
 
 
 @app.context_processor
 def cliente_routes():
-    routes = get_routes_for('cliente')
+    routes = get_routes_for('cliente', ["dashboard", "prestiti", "carte", "account"])
     return dict(cliente_routes=routes)
 
 
 @app.context_processor
 def bancario_routes():
-    routes = get_routes_for('bancario')
+    routes = get_routes_for('bancario', ["dashboard", "richieste", "polizze", "account"])
     return dict(bancario_routes=routes)
 
 
 @app.context_processor
 def direttore_routes():
-    routes = get_routes_for('direttore')
+    routes = get_routes_for('direttore', ["dashboard", "account"])
     return dict(direttore_routes=routes)

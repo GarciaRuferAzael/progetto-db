@@ -1,5 +1,6 @@
 from datetime import datetime
-from sqlalchemy import Date, Boolean, DateTime, Integer, String, UniqueConstraint, text
+from random import randrange
+from sqlalchemy import Date, Boolean, DateTime, Integer, String, UniqueConstraint
 from sqlalchemy import ForeignKey, CheckConstraint, or_
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.schema import Column
@@ -59,9 +60,9 @@ class ContoCorrente(db.Model):
     filiale_id = Column('filiale_id', Integer, ForeignKey("filiali.id"))
 
     cliente1 = relationship('Cliente', foreign_keys=[
-                           cliente1_id], back_populates='conti_correnti', lazy=True)
+        cliente1_id], back_populates='conti_correnti', lazy=True)
     cliente2 = relationship('Cliente', foreign_keys=[
-                           cliente2_id], back_populates='conti_correnti', lazy=True)
+        cliente2_id], back_populates='conti_correnti', lazy=True)
     filiale = relationship(
         'Filiale', back_populates='conti_correnti', lazy=True)
 
@@ -71,11 +72,14 @@ class ContoCorrente(db.Model):
     # if cliente2_id is not null, should be different from cliente1_id
     CheckConstraint('cliente2_id IS NULL OR cliente1_id != cliente2_id',
                     name='check_conto_corrente_clienti')
+    
+    # unique iban
+    UniqueConstraint('iban', name='unique_iban')
 
     def generate_iban(self):
         country_code = 'IT'
         checksum = '00'  # Placeholder for checksum
-        bban = f'1234{self.filiale_id}{self.cliente1_id:012d}'
+        bban = f'{self.filiale_id}{randrange(1000, 10000)}{self.cliente1_id:012d}'
         temp_iban = f'{country_code}{checksum}{bban}'
 
         # Calculate the checksum
@@ -315,14 +319,60 @@ class StoricoDirezione(db.Model):
                      name='unique_direttore_filiale_year')
 
 
-def get_conti_correnti_by_direttore_id(direttore_id):
-    query = text("""
-        SELECT cc.*
-        FROM conti_correnti cc
-        JOIN filiali f ON cc.filiale_id = f.id
-        JOIN storico_direzione sd ON f.id = sd.filiale_id
-        WHERE sd.direttore_id = :direttore_id
-          AND sd.year = YEAR(CURDATE());
-    """)
-    result = db.session.execute(query, {'direttore_id': direttore_id})
-    return result.fetchall()
+class TransazioneInterna(db.Model):
+    __tablename__ = "transazioni_interne"
+
+    id = Column('id', Integer, primary_key=True)
+    conto_corrente_id = Column(
+        'conto_corrente_id', Integer, ForeignKey("conti_correnti.id"))
+
+    conto_corrente = relationship('ContoCorrente', lazy=True)
+
+    def __repr__(self):
+        return f"<TransazioneInterna {self.id}>"
+
+
+class TransazioneEsterna(db.Model):
+    __tablename__ = "transazioni_esterne"
+
+    id = Column('id', Integer, primary_key=True)
+    iban = Column('iban', String(length=27))
+
+    def __repr__(self):
+        return f"<TransazioneEsterna {self.id}>"
+
+
+class Transazione(db.Model):
+    __tablename__ = "transazioni"
+
+    id = Column('id', Integer, primary_key=True)
+    importo = Column('importo', Integer, CheckConstraint('importo > 0'))
+    data = Column('data', DateTime, default=db.func.now())
+    entrata = Column('entrata', Boolean, default=False)
+    descrizione = Column('descrizione', String(length=256))
+    causale = Column('causale', String(length=256), nullable=True)
+    transazione_interna_id = Column('transazione_interna_id', Integer, ForeignKey(
+        "transazioni_interne.id"), nullable=True)
+    transazione_esterna_id = Column('transazione_esterna_id', Integer, ForeignKey(
+        "transazioni_esterne.id"), nullable=True)
+    # a Transazione can make reference to another Transazione
+    transazione_id = Column('transazione_id', Integer, ForeignKey('transazioni.id'), nullable=True)
+
+    transazione_interna = relationship(
+        'TransazioneInterna', backref='transazione', uselist=False, lazy=True)
+    transazione_esterna = relationship(
+        'TransazioneEsterna', backref='transazione', uselist=False, lazy=True)
+    transazione = relationship(
+        'Transazione', remote_side=[id], uselist=False, lazy=True)
+    
+    # check transazione_esterna_id or transazione_interna_id is not null (not both)
+    CheckConstraint(
+        '(transazione_interna_id IS NOT NULL AND transazione_esterna_id IS NULL) OR (transazione_interna_id IS NULL AND transazione_esterna_id IS NOT NULL))'
+    )
+    # check transazione_id is not equal to id
+    CheckConstraint(
+        'transazione_id IS NULL OR transazione_id != id'
+    )
+
+    def __repr__(self):
+        return f"<Transazione {self.id}>"

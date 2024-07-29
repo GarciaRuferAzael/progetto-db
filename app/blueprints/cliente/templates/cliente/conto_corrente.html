@@ -1,0 +1,97 @@
+{% extends 'cliente/cliente_base.html' %}
+{% from 'macros/form.html' import form %}
+
+{% block header %}
+<h1>{% block title %}Conto Corrente {{conto_corrente.id}}{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Display saldo -->
+    <div class="mb-5">
+        <h3>Saldo: {{ conto_corrente.saldo }} &euro;</h3>
+    </div>
+
+    <div class="mb-5">
+        <h3>Transazioni</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Descrizione</th>
+                    <th>Causale</th>
+                    <th>Dare</th>
+                    <th>Avere</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transazione in transazioni %}
+                <tr>
+                    <td>{{ transazione.data }}</td>
+                    <td>{{ transazione.descrizione }}</td>
+                    <td>{% if transazione.causale %}{{ transazione.causale }}{% endif %}</td>
+                    <td>{% if not transazione.entrata %} -{{ transazione.importo }} &euro; {% endif %}</td>
+                    <td>{% if transazione.entrata %} {{ transazione.importo }} &euro; {% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Invia bonifico -->
+    <div class="d-flex flex-row flex-wrap justify-content-center">
+        <!-- button, it should open a model -->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#bonificoModal">
+            Invia bonifico
+        </button>
+
+        <!-- modal to request a new prestito -->
+        <div class="modal fade" id="bonificoModal" tabindex="-1" role="dialog" aria-labelledby="bonificoModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="bonificoModalLabel">Nuovo bonifico</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        {{ form(bonifico_form, 'cliente.bonifico', enctype="multipart/form-data",
+                        form_class="flex-flow-wrap", hide_submit_btn=true) }}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Chiudi</button>
+                        <button type="submit" id="submit-bonifico" class="btn btn-primary">Invia</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block script %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const contoCorrenteId = {{ conto_corrente.id | tojson
+    }};
+    const contoCorrenteIdField = document.getElementById("conto_corrente_id");
+    const submitBtn = document.getElementById("submit");
+    const submitBonifico = document.getElementById("submit-bonifico");
+
+    contoCorrenteIdField.value = contoCorrenteId;
+
+    submitBonifico.addEventListener("click", function () {
+        submitBtn.click();
+    });
+
+    // Check if the bonifico_form has errors
+    const hasValuesOrErrors = {{ (bonifico_form.errors | length > 0) | tojson }};
+    if (hasValuesOrErrors) {
+        $('#bonificoModal').modal('show');
+    }
+    });
+</script>
+{% endblock %}
