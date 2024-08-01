@@ -1,6 +1,7 @@
 from flask import current_app as app
 from datetime import datetime
 from werkzeug.utils import secure_filename
+import magic
 import os
 
 """
@@ -17,3 +18,7 @@ def save_file(file) -> str:
     path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(path)
     return path
+
+def get_mime_type(file_path):
+    mime = magic.Magic(mime=True)
+    return mime.from_file(file_path)

@@ -5,11 +5,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="half-container">
-</div>
+<div class="container">
 <!-- Assigned Filiale -->
 <h3 class="mb-4">Filiale: {{ filiale.sede }}</h3>
-
 
 <!-- conti_correnti of the assigned Filiale -->
 <h3>Conti correnti</h3>
@@ -32,5 +30,56 @@
         {% endfor %}
     </tbody>
 </table>
+
+<!-- most spending Clients -->
+<h3>Clienti più alto spendenti nel mese corrente</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>N.</th>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Telefono</th>
+            <th>Spesa totale</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cliente in most_spending_clients %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ cliente.nome }} {{ cliente.cognome }}</td>
+            <td>{{ cliente.email }}</td>
+            <td>{{ cliente.telefono }}</td>
+            <td>{{ cliente.spesa_totale }} &euro;</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- bancari of the assigned Filiale -->
+<h3>Bancari</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Telefono</th>
+            <th>Clienti assegnati</th>
+            <th>Richieste elaborate</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for bancario in filiale.bancari %}
+        <tr>
+            <td>{{ bancario.nome }} {{ bancario.cognome }}</td>
+            <td>{{ bancario.email }}</td>
+            <td>{{ bancario.telefono }}</td>
+            <td>{{ bancario.clienti | count }}</td>
+            <td>{{ bancario.richieste_conti_correnti | count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
 </div>
 {% endblock %}

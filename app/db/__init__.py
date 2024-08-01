@@ -1,6 +1,6 @@
 from datetime import datetime
 from random import randrange
-from sqlalchemy import Date, Boolean, DateTime, Integer, String, UniqueConstraint
+from sqlalchemy import Date, Boolean, DateTime, Float, Integer, String, UniqueConstraint, extract, text
 from sqlalchemy import ForeignKey, CheckConstraint, or_
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.schema import Column
@@ -22,13 +22,21 @@ class Filiale(db.Model):
     __tablename__ = "filiali"
 
     id = Column('id', Integer, primary_key=True)
-    saldo = Column('saldo', Integer, CheckConstraint('saldo >= 0'), default=0)
+    saldo = Column('saldo', Float, CheckConstraint('saldo >= 0'), default=0)
     sede = Column('sede', String(length=64))
 
     bancari = relationship('Bancario', lazy=True)
     conti_correnti = relationship('ContoCorrente', lazy=True)
     storico_direzioni = relationship(
         'StoricoDirezione', back_populates='filiale', lazy=True)
+    prestiti = relationship(
+        'Prestito',
+        secondary="conti_correnti",
+        primaryjoin="Filiale.id == ContoCorrente.filiale_id",
+        secondaryjoin="ContoCorrente.id == Prestito.conto_corrente_id",
+        lazy=True,
+        viewonly=True,
+    )
 
     def __repr__(self):
         return f"<Filiale {self.id}>"
@@ -49,7 +57,7 @@ class ContoCorrente(db.Model):
     __tablename__ = "conti_correnti"
 
     id = Column('id', Integer, primary_key=True)
-    saldo = Column('saldo', Integer, CheckConstraint('saldo >= 0'), default=0)
+    saldo = Column('saldo', Float, CheckConstraint('saldo >= 0'), default=0)
     iban = Column('iban', String(length=27), unique=True)
     cliente1_id = Column(
         'cliente1_id', Integer, ForeignKey("clienti.id")
@@ -69,6 +77,64 @@ class ContoCorrente(db.Model):
     def __repr__(self):
         return f"<ContoCorrente {self.id}>"
 
+    @property
+    def spesa_mensile_media(self):
+        """
+        Calculate the average expenses of the ContoCorrente for month
+        """
+        query = text("""
+            SELECT AVG(monthly_sum) AS average_expenses
+            FROM (
+                SELECT 
+                    YEAR(t.data) AS year,
+                    MONTH(t.data) AS month,
+                    SUM(t.importo) AS monthly_sum
+                FROM 
+                    transazioni t
+                JOIN 
+                    transazioni_interne ti ON t.transazione_interna_id = ti.id
+                WHERE 
+                    ti.conto_corrente_id = :id
+                    AND t.entrata = FALSE
+                GROUP BY 
+                    YEAR(t.data),
+                    MONTH(t.data)
+            ) AS subquery
+        """)
+        result = db.session.execute(query, {'id': self.id})
+        res = result.scalar()
+        return float(res if res else 0)
+        
+    
+    @property      
+    def entrata_mensile_media(self):
+        """
+        Calculate the average incomes of the ContoCorrente for month
+        """
+        query = text("""
+            SELECT AVG(monthly_sum) AS average_incomes
+            FROM (
+                SELECT 
+                    YEAR(t.data) AS year,
+                    MONTH(t.data) AS month,
+                    SUM(t.importo) AS monthly_sum
+                FROM 
+                    transazioni t
+                JOIN 
+                    transazioni_interne ti ON t.transazione_interna_id = ti.id
+                WHERE 
+                    ti.conto_corrente_id = :id
+                    AND t.entrata = TRUE
+                GROUP BY 
+                    YEAR(t.data),
+                    MONTH(t.data)
+            ) AS subquery
+        """)
+        result = db.session.execute(query, {'id': self.id})
+        res = result.scalar()
+        return float(res if res else 0)
+            
+    
     # if cliente2_id is not null, should be different from cliente1_id
     CheckConstraint('cliente2_id IS NULL OR cliente1_id != cliente2_id',
                     name='check_conto_corrente_clienti')
@@ -135,7 +201,7 @@ class Mutuo(db.Model):
     __tablename__ = "mutui"
 
     id = Column('id', Integer, primary_key=True)
-    importo = Column('importo', Integer, CheckConstraint('importo > 0'))
+    importo = Column('importo', Float, CheckConstraint('importo > 0'))
     data_creazione = Column('data_creazione', DateTime, default=db.func.now())
     data_accettazione = Column('data_accettazione', DateTime, nullable=True)
     accettata = Column('accettata', Boolean, default=False, nullable=True)
@@ -157,14 +223,18 @@ class Prestito(db.Model):
     __tablename__ = "prestiti"
 
     id = Column('id', Integer, primary_key=True)
-    importo = Column('importo', Integer, CheckConstraint('importo > 0'))
+    importo = Column('importo', Float, CheckConstraint('importo > 0'))
     data_creazione = Column('data_creazione', DateTime, default=db.func.now())
     data_accettazione = Column('data_accettazione', DateTime, nullable=True)
     accettata = Column('accettata', Boolean, nullable=True)
     cliente_id = Column('cliente_id', Integer, ForeignKey("clienti.id"))
+    conto_corrente_id = Column('conto_corrent_id', Integer, ForeignKey("conti_correnti.id"))
+    direttore_id = Column('direttore_id', Integer, ForeignKey("direttori.id"), nullable=True)
 
     garanzie = relationship('Garanzia', lazy=True)
     cliente = relationship('Cliente', back_populates="prestiti", lazy=True)
+    conto_corrente = relationship('ContoCorrente', lazy=True)
+    direttore = relationship('Direttore', lazy=True)
 
     # if accettata is true, data_accettazione should not be null
     CheckConstraint(
@@ -180,7 +250,7 @@ class Garanzia(db.Model):
     id = Column('id', Integer, primary_key=True)
     tipologia = Column('tiplogia', String(length=256))
     file = Column('file', String(length=256))
-    valutazione = Column('valutazione', Integer)
+    valutazione = Column('valutazione', Float)
     prestito_id = Column('prestito_id', Integer,
                          ForeignKey("prestiti.id"), nullable=True)
     mutuo_id = Column('mutuo_id', Integer,
@@ -346,7 +416,7 @@ class Transazione(db.Model):
     __tablename__ = "transazioni"
 
     id = Column('id', Integer, primary_key=True)
-    importo = Column('importo', Integer, CheckConstraint('importo > 0'))
+    importo = Column('importo', Float, CheckConstraint('importo > 0'))
     data = Column('data', DateTime, default=db.func.now())
     entrata = Column('entrata', Boolean, default=False)
     descrizione = Column('descrizione', String(length=256))
@@ -376,3 +446,6 @@ class Transazione(db.Model):
 
     def __repr__(self):
         return f"<Transazione {self.id}>"
+    
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns} # type: ignore

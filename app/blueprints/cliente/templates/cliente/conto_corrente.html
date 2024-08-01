@@ -10,7 +10,12 @@
     <!-- Display saldo -->
     <div class="mb-5">
         <h3>Saldo: {{ conto_corrente.saldo }} &euro;</h3>
+        <h3>Spesa mensile media: {{ conto_corrente.spesa_mensile_media }} &euro;</h3>
+        <h3>Entrata mensile media: {{ conto_corrente.entrata_mensile_media }} &euro;</h3>
     </div>
+
+    <!-- saldo chart -->
+    <canvas id="balanceChart" class="mb-5" width="800" height="400"></canvas>
 
     <div class="mb-5">
         <h3>Transazioni</h3>
@@ -75,23 +80,90 @@
 {% block script %}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const contoCorrenteId = {{ conto_corrente.id | tojson
-    }};
-    const contoCorrenteIdField = document.getElementById("conto_corrente_id");
-    const submitBtn = document.getElementById("submit");
-    const submitBonifico = document.getElementById("submit-bonifico");
+        const contoCorrenteId = {{ conto_corrente.id | tojson }};
+        const transazioni = {{ t_list | tojson }};
+        let balance = {{ conto_corrente.saldo | tojson }};
 
-    contoCorrenteIdField.value = contoCorrenteId;
+        console.log(balance);
 
-    submitBonifico.addEventListener("click", function () {
-        submitBtn.click();
-    });
+        const contoCorrenteIdField = document.getElementById("conto_corrente_id");
+        const submitBtn = document.getElementById("submit");
+        const submitBonifico = document.getElementById("submit-bonifico");
 
-    // Check if the bonifico_form has errors
-    const hasValuesOrErrors = {{ (bonifico_form.errors | length > 0) | tojson }};
-    if (hasValuesOrErrors) {
-        $('#bonificoModal').modal('show');
-    }
+        contoCorrenteIdField.value = contoCorrenteId;
+
+        submitBonifico.addEventListener("click", function () {
+            submitBtn.click();
+        });
+
+        // Check if the bonifico_form has errors
+        const hasValuesOrErrors = {{ (bonifico_form.errors | length > 0) | tojson }};
+        if (hasValuesOrErrors) {
+            $('#bonificoModal').modal('show');
+        }
+
+        // Sort transactions by date
+        transazioni.sort((a, b) => a.data - b.data);
+
+        // Initialize arrays for plotting
+        let dates = [new Date()];
+        let balances = [balance];
+
+        // Iterate through transactions and update balance
+        transazioni.reverse().forEach(transazione => {
+            if (transazione.entrata) {
+                balance -= transazione.importo; // reverse deposit
+            } else {
+                balance += transazione.importo; // reverse withdrawal
+            }
+            dates.push(transazione.data);
+            balances.push(balance);
+        });
+
+        // Create the chart
+        let ctx = document.getElementById('balanceChart').getContext('2d');
+        let balanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Saldo',
+                    data: balances,
+                    fill: false,
+                    borderColor: 'blue',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            tooltipFormat: 'YYYY-MM-DD'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Data'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Saldo'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Saldo'
+                    }
+                }
+            }
+        });
+        
+
     });
 </script>
 {% endblock %}

@@ -5,7 +5,7 @@ from db import db
 
 from blueprints.cliente import client_page
 from blueprints.bancario import bancario_page
-from blueprints.direttore import director_page
+from blueprints.direttore import direttore_page
 
 app = Flask(__name__)
 
@@ -25,7 +25,7 @@ db.init_app(app)
 
 app.register_blueprint(client_page, url_prefix="/cliente/")
 app.register_blueprint(bancario_page, url_prefix="/bancario/")
-app.register_blueprint(director_page, url_prefix="/direttore/")
+app.register_blueprint(direttore_page, url_prefix="/direttore/")
 
 
 @app.route("/")
@@ -43,7 +43,7 @@ def get_routes_for(name: str, routes_list: list[str]):
 
 @app.context_processor
 def cliente_routes():
-    routes = get_routes_for('cliente', ["dashboard", "prestiti", "carte", "account"])
+    routes = get_routes_for('cliente', ["dashboard", "prestiti", "account"])
     return dict(cliente_routes=routes)
 
 
@@ -55,5 +55,5 @@ def bancario_routes():
 
 @app.context_processor
 def direttore_routes():
-    routes = get_routes_for('direttore', ["dashboard", "account"])
+    routes = get_routes_for('direttore', ["dashboard", "richieste", "account"])
     return dict(direttore_routes=routes)

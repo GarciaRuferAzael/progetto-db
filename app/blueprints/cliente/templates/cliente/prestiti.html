@@ -17,6 +17,7 @@
                     <h5 class="card-title">Prestito ID: {{ prestito.id }}</h5>
                     <p class="card-text">Importo: &euro;{{ prestito.importo }}</p>
                     <p class="card-text">Data Creazione: {{ prestito.data_creazione.strftime('%Y-%m-%d') }}</p>
+                    <p class="card-text">Conto Corrente: {{ prestito.conto_corrente.iban }}</p>
                     
                     <!-- display the garanzie -->
                     <p class="card-text">Garanzie:</p>
@@ -61,7 +62,7 @@
                     </div>
                     <div class="modal-body">
                         {{ form(prestito_form, 'cliente.prestiti', enctype="multipart/form-data",
-                        form_class="flex-flow-wrap", hide_submit_btn=true) }}
+                        form_class="flex-flow-wrap mb-2", hide_submit_btn=true) }}
                         <button type="button" id="add-garanzia-btn" class="btn btn-md">Aggiungi Garanzia</button>
                     </div>
                     <div class="modal-footer">

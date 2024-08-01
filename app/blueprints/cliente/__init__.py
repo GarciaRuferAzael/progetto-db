@@ -132,11 +132,16 @@ def conto_corrente(id):
 
     # get transactions for the conto corrente
     transazioni = get_transazioni_by_conto_corrente_id(conto_corrente.id)
+    t_list = [
+        {"data": t.data.strftime('%Y-%m-%d %H:%M:%S'), "importo": t.importo, "entrata": t.entrata}
+        for t in transazioni
+    ]
 
     return render_template(
         'cliente/conto_corrente.html',
         conto_corrente=conto_corrente, 
         transazioni=transazioni,
+        t_list=t_list,
         bonifico_form=form
     )
 
@@ -250,12 +255,26 @@ def bonifico():
 @cliente_auth_required
 def prestiti():
     form = PrestitoForm()
-
+    
+    # find conto correnti of current user
+    conto_correnti = db.session.query(ContoCorrente).where(
+        (ContoCorrente.cliente1_id == session['cliente']['id']) | (
+            ContoCorrente.cliente2_id == session['cliente']['id'])
+    ).all()
+    form.conto_corrente_id.choices = [(c.id, c.iban) for c in conto_correnti]
+    
     if form.validate_on_submit():
         # create the prestito
         prestito = Prestito()
         prestito.importo = form.importo.data
         prestito.cliente_id = session['cliente']['id']
+        
+        # check if selected conto corrente is owned by cliente
+        if form.conto_corrente_id.data in [c.id for c in conto_correnti]:
+            prestito.conto_corrente_id = form.conto_corrente_id.data
+        else:
+            flash("Conto corrente non valido", 'error')
+            return redirect(url_for('cliente.prestiti'))
 
         db.session.add(prestito)
         db.session.commit()
@@ -287,12 +306,6 @@ def prestiti():
         cliente_id=session['cliente']['id']).all()
 
     return render_template('cliente/prestiti.html', prestito_form=form, prestiti=prestiti)
-
-
-@client_page.route('/carte', methods=['GET'])
-@cliente_auth_required
-def carte():
-    return render_template('cliente/carte.html')
 
 
 @client_page.route('/account', methods=['GET', 'POST'])

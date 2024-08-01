@@ -5,3 +5,4 @@ PyMySQL[rsa]
 Flask-SQLAlchemy
 bcrypt
 alembic
+python-magic

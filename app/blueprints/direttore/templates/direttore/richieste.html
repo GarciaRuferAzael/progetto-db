@@ -1,0 +1,61 @@
+{% extends 'direttore/direttore_base.html' %}
+
+{% block header %}
+<h1>{% block title %}Richieste{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Display saldo filiale -->
+    <h3 class="mb-4">Saldo Filiale: {{ filiale.saldo }}&euro;</h3>
+
+    <h3>Prestiti</h3>
+    <div class="row mb-5">
+        {% for prestito in prestiti %}
+        <div class="col-12 col-md-6 col-lg-5 d-flex align-items-stretch mb-4 justify-content-center">
+            <div class="card" style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">Prestito N: {{ prestito.id }}</h5>
+                    <p class="card-text">Cliente: {{ prestito.cliente.nome }} {{ prestito.cliente.cognome }}</p>
+                    <p class="card-text">Data Creazione: {{ prestito.data_creazione.strftime('%Y-%m-%d') }}</p>
+                    <p class="card-text">Importo: {{ prestito.importo }}&euro;</p>
+
+                    <!-- display garanzie -->
+                    <h6>Garanzie</h6>
+                    <ul>
+                        {% for garanzia in prestito.garanzie %}
+                        <li><a href="{{ url_for('direttore.garanzia', garanzia_id=garanzia.id) }}">{{ garanzia.tipologia }}: {{ garanzia.valutazione }}&euro;</a></li>
+                        {% endfor %}
+                    </ul>
+
+                    {% if prestito.accettata == None %}
+                    <div class="d-flex flex-row justify-content-around">
+                        <form action="{{ url_for('direttore.accetta_prestito', prestito_id=prestito.id) }}"
+                        method="post">
+                            <input type="hidden" name="prestito_id" value="{{ prestito.id }}">
+                            <input type="hidden" name="accettata" value="1">
+                            <button type="submit" class="btn btn-success">Accetta</button>
+                        </form>
+                        <form action="{{ url_for('direttore.accetta_prestito', prestito_id=prestito.id) }}"
+                            method="post">
+                            <input type="hidden" name="prestito_id" value="{{ prestito.id }}">
+                            <input type="hidden" name="accettata" value="0">
+                            <button type="submit" class="btn btn-danger">Rifiuta</button>
+                        </form>
+                    </div>
+                    {% elif prestito.accettata == True %}
+                    <p class="text-success">Accettato</p>
+                    {% else %}
+                    <p class="text-danger">Rifiutato</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="container">
+            <h5 class="text-center">Nessun prestito</h5>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
