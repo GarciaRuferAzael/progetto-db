@@ -176,7 +176,10 @@ class Cliente(db.Model, Serializer):
     )
     richieste_conti_correnti = relationship(
         'RichiestaContoCorrente', lazy=True, back_populates="cliente")
+    richieste_carte_prepagate = relationship(
+        'RichiestaCartaPrepagata', lazy=True, back_populates="cliente")
     bancario = relationship('Bancario', lazy=True, back_populates="clienti")
+    carte_prepagate = relationship('CartaPrepagata', lazy=True)
 
     def __repr__(self):
         return f"<Cliente {self.id}>"
@@ -308,6 +311,8 @@ class Bancario(db.Model, Serializer):
     filiale = relationship('Filiale', back_populates='bancari', lazy=True)
     richieste_conti_correnti = relationship(
         'RichiestaContoCorrente', lazy=True)
+    richieste_carte_prepagate = relationship(
+        'RichiestaCartaPrepagata', lazy=True)
 
     def __repr__(self):
         return f"<Bancario {self.id}>"
@@ -449,3 +454,51 @@ class Transazione(db.Model):
     
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns} # type: ignore
+    
+class RichiestaCartaPrepagata(db.Model):
+    __tablename__ = "richieste_carte_prepagate"
+    
+    id = Column('id', Integer, primary_key=True)
+    data_creazione = Column('data_creazione', DateTime, default=db.func.now())
+    data_accettazione = Column('data_accettazione', DateTime, nullable=True)
+    accettata = Column('accettata', Boolean, nullable=True)
+    cliente_id = Column('cliente_id', Integer, ForeignKey("clienti.id"))
+    bancario_id = Column('bancario_id', Integer, ForeignKey("bancari.id"))
+    carta_prepagata_id = Column('carta_prepagata_id', Integer, ForeignKey("carte_prepagate.id"), nullable=True)
+
+    cliente = relationship(
+        'Cliente', back_populates="richieste_carte_prepagate", lazy=True)
+    bancario = relationship(
+        'Bancario', back_populates="richieste_carte_prepagate", lazy=True)
+    carta_pregata = relationship('CartaPrepagata', lazy=True)
+
+    # if accettata is true, data_accettazione should not be null
+    CheckConstraint(
+        'accettata = true AND data_accettazione IS NOT NULL OR accettata = false OR accettata IS NULL', name='check_accettata')
+
+    def __repr__(self):
+        return f"<RichiestaCartaPrepagata {self.id}>"
+    
+class CartaPrepagata(db.Model):
+    __tablename__ = "carte_prepagate"
+    
+    id = Column('id', Integer, primary_key=True)
+    numero = Column('numero', String(length=16), unique=True)
+    scadenza = Column('scadenza', Date)
+    cvv = Column('cvv', String(length=3))
+    pin = Column('pin', String(length=4))
+    saldo = Column('saldo', Float, CheckConstraint('saldo >= 0'), default=0)
+    limite_spesa = Column('limite_spesa', Float, CheckConstraint('limite_spesa >= 0'), default=0)
+    disabilitata = Column('disabilitata', Boolean, default=False)
+    cliente_id = Column('cliente_id', Integer, ForeignKey("clienti.id"))
+    
+    cliente = relationship('Cliente', lazy=True, back_populates='carte_prepagate')
+    
+    def __repr__(self):
+        return f"<CartaPrepagata {self.id}>"
+    
+    def generate(self):
+        self.numero = f'12345678{randrange(1000, 10000)}{randrange(1000, 10000)}'
+        self.scadenza = datetime(datetime.now().year + 3, datetime.now().month, 1)
+        self.cvv = f'{randrange(100, 1000)}'
+        self.pin = f'{randrange(1000, 10000)}'

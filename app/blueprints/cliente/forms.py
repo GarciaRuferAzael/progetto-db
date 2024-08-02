@@ -37,3 +37,8 @@ class BonificoForm(FlaskForm):
     iban_destinatario = StringField('IBAN Destinatario', validators=[DataRequired()])
     causale = StringField('Causale')
     submit = SubmitField('Invia')
+    
+class RicaricaCartaForm(FlaskForm):
+    importo = IntegerField('Importo', validators=[DataRequired(), NumberRange(min=0)])
+    conto_corrente_id = SelectField('Conto Corrente', coerce=int)
+    submit = SubmitField('Richiedi')

@@ -1,10 +1,95 @@
 {% extends 'cliente/cliente_base.html' %}
+{% from 'macros/form.html' import form %}
 
 {% block header %}
-<h1>{% block title %}Carte{% endblock %}</h1>
+<h1>{% block title %}Carte Prepagate{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
-<div class="d-flex flex-row flex-wrap justify-content-center">
+<div class="container">
+    <!-- Richieste Conti Correnti -->
+    {% if richieste_in_attesa > 0 %}
+    <div class="d-flex flex-row flex-wrap mb-3">
+        <h5>Richieste in attesa: {{ richieste_in_attesa }}</h5>
+    </div>
+    {% endif %}
+
+    <!-- Display CartePrepagate -->
+    {% if carte_prepagate %}
+    <div class="row mb-5">
+        {% for carta in carte_prepagate %}
+        <div class="col-12 col-md-6 col-lg-4 d-flex align-items-stretch mb-4 justify-content-center">
+            <div class="credit-card{% if carta.disabilitata %} credit-card-disabled{% endif %}">
+                <div class="menu-icon dropright">
+                    <span type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    ⋮
+                    </span>
+                    <div class="dropdown-menu">
+                        {% if carta.disabilitata %}
+                            <form action="{{ url_for('cliente.disabilita_carta') }}" method="POST">
+                                <input type="hidden" name="carta_id" value="{{ carta.id }}">
+                                <input type="hidden" name="disabilita" value="0">
+                                <button>Sblocca</button>
+                            </form>
+                        {% else %}
+                            <form action="{{ url_for('cliente.disabilita_carta') }}" method="POST">
+                                <input type="hidden" name="carta_id" value="{{ carta.id }}">
+                                <input type="hidden" name="disabilita" value="1">
+                                <button>Blocca</button>
+                            </form>
+                        {% endif %}
+                        <button id="ricaricaBtn" data-cartaid="{{carta.id}}" type="button" data-toggle="modal" data-target="#ricaricaModal">Ricarica saldo</button>
+                    </div>
+                </div>
+                <div class="cc-number">{{ carta.numero }}</div>
+                <div class="cc-info">
+                    <div class="cc-expiry">
+                        <span>Scadenza</span><br>
+                        <!-- format date like month/year -->
+                        <span>{{ carta.scadenza.strftime('%m/%Y') }} </span>
+                    </div>
+                    <div class="cc-cvv">
+                        <span>CVV</span><br>
+                        <span>{{ carta.cvv}}</span>
+                    </div>
+                </div>
+                <div class="cc-balance">
+                    <span>Balance:</span><br>
+                    <span>&euro; {{ carta.saldo }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Modal -->
+    <div class="modal fade" id="ricaricaModal" tabindex="-1" aria-labelledby="ricaricaModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ricaricaModalLabel">Ricarica</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('cliente.ricarica_carta') }}" method="POST">
+                        {{ form.csrf_token }}
+                        <input type="hidden" name="carta_id" id="carta_id" value="">
+                        {{ form.ricarica }}
+                        <button type="submit" class="btn btn-primary">Ricarica</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   <!-- Request a ContoCorrente -->
+   <div class="d-flex flex-row flex-wrap justify-content-center">
+        <form action="{{ url_for('cliente.richiesta_carta_prepagata') }}" method="POST">
+            <button class="btn btn-primary">Richiedi carta prepagata</button>
+        </form>
+    </div>
 </div>
 {% endblock %}

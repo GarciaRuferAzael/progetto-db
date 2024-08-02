@@ -5,9 +5,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="half-container">
+<div class="container">
+    <h3>Richieste conto corrente</h3>
     <div class="row mb-5">
-        {% for richiesta in richieste %}
+        {% for richiesta in richieste_conto_corrente %}
         <div class="col-12 col-md-6 col-lg-5 d-flex align-items-stretch mb-4 justify-content-center">
             <div class="card" style="width: 18rem;">
                 <div class="card-body">
@@ -16,13 +17,47 @@
                     <p class="card-text">Data Creazione: {{ richiesta.data_creazione.strftime('%Y-%m-%d') }}</p>
 
                     <div class="d-flex flex-row justify-content-around">
-                        <form action="{{ url_for('bancario.accetta_richiesta', richiesta_id=richiesta.id) }}"
+                        <form action="{{ url_for('bancario.accetta_richiesta_conto_corrente', richiesta_id=richiesta.id) }}"
                             method="post">
                             <input type="hidden" name="richiesta_id" value="{{ richiesta.id }}">
                             <input type="hidden" name="accettata" value="1">
                             <button type="submit" class="btn btn-success">Accetta</button>
                         </form>
-                        <form action="{{ url_for('bancario.accetta_richiesta', richiesta_id=richiesta.id) }}"
+                        <form action="{{ url_for('bancario.accetta_richiesta_conto_corrente', richiesta_id=richiesta.id) }}"
+                            method="post">
+                            <input type="hidden" name="richiesta_id" value="{{ richiesta.id }}">
+                            <input type="hidden" name="accettata" value="0">
+                            <button type="submit" class="btn btn-danger">Rifiuta</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="container">
+            <h5 class="text-center">Nessun richiesta</h5>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h3>Richieste carte prepagate</h3>
+    <div class="row mb-5">
+        {% for richiesta in richieste_carte_prepagate %}
+        <div class="col-12 col-md-6 col-lg-5 d-flex align-items-stretch mb-4 justify-content-center">
+            <div class="card" style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">Richiesta N: {{ richiesta.id }}</h5>
+                    <p class="card-text">Cliente: {{ richiesta.cliente.nome }} {{ richiesta.cliente.cognome }}</p>
+                    <p class="card-text">Data Creazione: {{ richiesta.data_creazione.strftime('%Y-%m-%d') }}</p>
+
+                    <div class="d-flex flex-row justify-content-around">
+                        <form action="{{ url_for('bancario.accetta_richiesta_carta_prepagata', richiesta_id=richiesta.id) }}"
+                            method="post">
+                            <input type="hidden" name="richiesta_id" value="{{ richiesta.id }}">
+                            <input type="hidden" name="accettata" value="1">
+                            <button type="submit" class="btn btn-success">Accetta</button>
+                        </form>
+                        <form action="{{ url_for('bancario.accetta_richiesta_carta_prepagata', richiesta_id=richiesta.id) }}"
                             method="post">
                             <input type="hidden" name="richiesta_id" value="{{ richiesta.id }}">
                             <input type="hidden" name="accettata" value="0">

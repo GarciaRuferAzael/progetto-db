@@ -2,7 +2,7 @@ from datetime import date, datetime
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 from sqlalchemy import select
 
-from db import Cliente, ContoCorrente, db, Bancario, RichiestaContoCorrente
+from db import CartaPrepagata, Cliente, ContoCorrente, RichiestaCartaPrepagata, db, Bancario, RichiestaContoCorrente
 from utils.decorators import bancario_auth_required, bancario_unauth_required
 from .forms import AccountForm, LoginForm
 
@@ -51,12 +51,18 @@ def dashboard():
 @bancario_page.route('/richieste', methods=['GET'])
 @bancario_auth_required
 def richieste():
-    richieste = RichiestaContoCorrente.query.filter(RichiestaContoCorrente.accettata == None).all()
-    return render_template('bancario/richieste.html', richieste=richieste)
+    richieste_conto_corrente = RichiestaContoCorrente.query.filter(RichiestaContoCorrente.accettata == None).all()
+    richieste_carte_prepagate = RichiestaCartaPrepagata.query.filter(RichiestaCartaPrepagata.accettata == None).all()
+    
+    return render_template(
+        'bancario/richieste.html',
+        richieste_conto_corrente=richieste_conto_corrente,
+        richieste_carte_prepagate=richieste_carte_prepagate
+    )
 
-@bancario_page.route('/accetta_richiesta', methods=['POST'])
+@bancario_page.route('/accetta_richiesta_conto_corrente', methods=['POST'])
 @bancario_auth_required
-def accetta_richiesta():
+def accetta_richiesta_conto_corrente():
     richiesta_id = request.form.get('richiesta_id', type=int)
     accettata = bool(request.form.get('accettata', type=int))
     richiesta = RichiestaContoCorrente.query.filter_by(id=richiesta_id).first()
@@ -90,10 +96,47 @@ def accetta_richiesta():
 
     return redirect(url_for('bancario.richieste'))
 
-@bancario_page.route('/polizze', methods=['GET'])
+
+@bancario_page.route('/accetta_richiesta_carta_prepagata', methods=['POST'])
 @bancario_auth_required
-def polizza():
-    return render_template('bancario/polizze.html')
+def accetta_richiesta_carta_prepagata():
+    richiesta_id = request.form.get('richiesta_id', type=int)
+    accettata = bool(request.form.get('accettata', type=int))
+    richiesta = RichiestaCartaPrepagata.query.filter_by(id=richiesta_id).first()
+
+    if richiesta:
+        richiesta.accettata = accettata
+        richiesta.data_accettazione = db.func.now()
+        richiesta.bancario_id = session['bancario']['id']
+        db.session.add(richiesta)
+        
+        if accettata:
+            # create a new carta prepagata
+            carta_prepagata = CartaPrepagata()
+            carta_prepagata.cliente_id = richiesta.cliente_id
+            carta_prepagata.generate()
+            
+            db.session.add(carta_prepagata)
+            db.session.flush()
+            db.session.refresh(carta_prepagata)
+            
+            richiesta.carta_prepagata_id = carta_prepagata.id
+            db.session.add(richiesta)
+            
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            flash('Errore durante l\'elaborazione della richiesta', 'danger')
+            print(e)
+            return redirect(url_for('bancario.richieste'))
+        
+        flash('Richiesta accettata' if accettata else 'Richiesta rifutata', 'success')
+    else:
+        flash('Richiesta non trovata', 'danger')
+
+    return redirect(url_for('bancario.richieste'))
+
 
 @bancario_page.route('/account', methods=['GET', 'POST'])
 def account():

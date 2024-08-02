@@ -3,7 +3,7 @@ import os
 
 from db import db
 
-from blueprints.cliente import client_page
+from blueprints.cliente import cliente_page
 from blueprints.bancario import bancario_page
 from blueprints.direttore import direttore_page
 
@@ -23,7 +23,7 @@ if not os.path.exists(app.config["UPLOAD_FOLDER"]):
 
 db.init_app(app)
 
-app.register_blueprint(client_page, url_prefix="/cliente/")
+app.register_blueprint(cliente_page, url_prefix="/cliente/")
 app.register_blueprint(bancario_page, url_prefix="/bancario/")
 app.register_blueprint(direttore_page, url_prefix="/direttore/")
 
@@ -43,7 +43,7 @@ def get_routes_for(name: str, routes_list: list[str]):
 
 @app.context_processor
 def cliente_routes():
-    routes = get_routes_for('cliente', ["dashboard", "prestiti", "account"])
+    routes = get_routes_for('cliente', ["dashboard", "prestiti", "carte", "account"])
     return dict(cliente_routes=routes)
 
 
