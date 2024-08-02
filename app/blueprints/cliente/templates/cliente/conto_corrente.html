@@ -10,12 +10,16 @@
     <!-- Display saldo -->
     <div class="mb-5">
         <h3>Saldo: {{ conto_corrente.saldo }} &euro;</h3>
+        <h3>IBAN: {{ conto_corrente.iban }}</h3>
         <h3>Spesa mensile media: {{ conto_corrente.spesa_mensile_media }} &euro;</h3>
         <h3>Entrata mensile media: {{ conto_corrente.entrata_mensile_media }} &euro;</h3>
     </div>
 
     <!-- saldo chart -->
     <canvas id="balanceChart" class="mb-5" width="800" height="400"></canvas>
+
+    <!-- transazioni bar chart -->
+    <canvas id="transazioniChart" class="mb-5" width="800" height="400"></canvas>
 
     <div class="mb-5">
         <h3>Transazioni</h3>
@@ -80,12 +84,14 @@
 {% block script %}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        bonificoForm();
+        balanceChart();
+        transazioniChart();
+    });
+
+    // bonifico form
+    function bonificoForm() {
         const contoCorrenteId = {{ conto_corrente.id | tojson }};
-        const transazioni = {{ t_list | tojson }};
-        let balance = {{ conto_corrente.saldo | tojson }};
-
-        console.log(balance);
-
         const contoCorrenteIdField = document.getElementById("conto_corrente_id");
         const submitBtn = document.getElementById("submit");
         const submitBonifico = document.getElementById("submit-bonifico");
@@ -101,9 +107,12 @@
         if (hasValuesOrErrors) {
             $('#bonificoModal').modal('show');
         }
+    }
 
-        // Sort transactions by date
-        transazioni.sort((a, b) => a.data - b.data);
+    // Balance chart
+    function balanceChart() {
+        const transazioni = {{ t_list | tojson }};
+        let balance = {{ conto_corrente.saldo | tojson }};
 
         // Initialize arrays for plotting
         let dates = [new Date()];
@@ -162,8 +171,70 @@
                 }
             }
         });
-        
+    }
 
-    });
+    // transazioni chart
+    function transazioniChart() {
+        let transazioni = {{ t_list | tojson }};
+
+        // filter transazioni only for this year
+        const thisYear = new Date().getFullYear();
+        transazioni = transazioni.filter(t => new Date(t.data).getFullYear() === thisYear);
+
+        // group transazioni by month, sum importo for same entrata
+        const groupedTransazioni = transazioni.reduce((acc, t) => {
+            const month = new Date(t.data).getMonth();
+            if (!acc[month]) {
+                acc[month] = {"entrate": 0, "uscite": 0};
+            }
+            
+            if (t.entrata) {
+                acc[month].entrate += t.importo;
+            } else {
+                acc[month].uscite += t.importo;
+            }
+            return acc;
+        }, {});
+
+        // Create the chart
+        let ctx = document.getElementById('transazioniChart').getContext('2d');
+        let transazioniChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(groupedTransazioni).map(m => new Date(0, m).toLocaleString('default', { month: 'long' })),
+                datasets: [{
+                    label: 'Uscite',
+                    data: Object.values(groupedTransazioni).map(t => t.uscite),
+                    backgroundColor: 'red'
+                }, {
+                    label: 'Entrate',
+                    data: Object.values(groupedTransazioni).map(t => t.entrate),
+                    backgroundColor: 'green'
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Mese'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Importo'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Transazioni'
+                    }
+                }
+            }
+        });
+    }
 </script>
 {% endblock %}

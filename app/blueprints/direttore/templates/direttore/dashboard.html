@@ -31,30 +31,9 @@
     </tbody>
 </table>
 
-<!-- most spending Clients -->
-<h3>Clienti più alto spendenti nel mese corrente</h3>
-<table class="table">
-    <thead>
-        <tr>
-            <th>N.</th>
-            <th>Nome</th>
-            <th>Email</th>
-            <th>Telefono</th>
-            <th>Spesa totale</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for cliente in most_spending_clients %}
-        <tr>
-            <td>{{ loop.index }}</td>
-            <td>{{ cliente.nome }} {{ cliente.cognome }}</td>
-            <td>{{ cliente.email }}</td>
-            <td>{{ cliente.telefono }}</td>
-            <td>{{ cliente.spesa_totale }} &euro;</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<!-- most spending Clients bar chart -->
+<h3>Clienti con più spese del mese</h3>
+<canvas id="mostSpendingClients"></canvas>
 
 <!-- bancari of the assigned Filiale -->
 <h3>Bancari</h3>
@@ -82,4 +61,47 @@
 </table>
 
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        mostSpendingClients();
+    });
+
+    function mostSpendingClients() {
+        const clients = {{ most_spending_clients | tojson }};
+        console.log(clients);
+
+        // order by spesa_totale
+        clients.sort((a, b) => b.spesa_totale - a.spesa_totale);
+
+        const labels = clients.map(client => client.nome);
+        const data = clients.map(client => client.spesa_totale);
+
+        const ctx = document.getElementById('mostSpendingClients').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Spesa totale',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            }
+        });
+    }
+</script>
 {% endblock %}
