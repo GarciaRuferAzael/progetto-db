@@ -38,7 +38,7 @@
                                 <button>Blocca</button>
                             </form>
                         {% endif %}
-                        <button id="ricaricaBtn" data-cartaid="{{carta.id}}" type="button" data-toggle="modal" data-target="#ricaricaModal">Ricarica saldo</button>
+                        <button onclick="ricaricaForm(this)" data-cartaid="{{carta.id}}" type="button" data-toggle="modal" data-target="#ricaricaModal">Ricarica saldo</button>
                     </div>
                 </div>
                 <div class="cc-number">{{ carta.numero }}</div>
@@ -74,12 +74,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form action="{{ url_for('cliente.ricarica_carta') }}" method="POST">
-                        {{ form.csrf_token }}
-                        <input type="hidden" name="carta_id" id="carta_id" value="">
-                        {{ form.ricarica }}
-                        <button type="submit" class="btn btn-primary">Ricarica</button>
-                    </form>
+                    {{ form(ricarica_form, 'cliente.ricarica_carta_prepagata') }}
                 </div>
             </div>
         </div>
@@ -92,4 +87,14 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+
+{% block script %}
+<script>
+    function ricaricaForm(target) {
+        const cartaId = target.dataset.cartaid;
+        document.getElementById('carta_prepagata_id').value = cartaId;
+    }
+</script>
 {% endblock %}

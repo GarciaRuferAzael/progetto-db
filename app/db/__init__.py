@@ -399,9 +399,17 @@ class TransazioneInterna(db.Model):
 
     id = Column('id', Integer, primary_key=True)
     conto_corrente_id = Column(
-        'conto_corrente_id', Integer, ForeignKey("conti_correnti.id"))
+        'conto_corrente_id', Integer, ForeignKey("conti_correnti.id"), nullable=True)
+    carta_prepagata_id = Column(
+        'carta_prepagata_id', Integer, ForeignKey("carte_prepagate.id"), nullable=True)
 
     conto_corrente = relationship('ContoCorrente', lazy=True)
+    carta_prepagata = relationship('CartaPrepagata', lazy=True)
+    
+    # check conto_corrente_id or carta_prepagata_id is not null (not both)
+    CheckConstraint(
+        '(conto_corrente_id IS NOT NULL AND carta_prepagata_id IS NULL) OR (conto_corrente_id IS NULL AND carta_prepagata_id IS NOT NULL))'
+    )
 
     def __repr__(self):
         return f"<TransazioneInterna {self.id}>"

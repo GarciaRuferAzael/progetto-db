@@ -6,7 +6,7 @@ from db import Prestito, Cliente, Garanzia
 from db.query import get_transazioni_by_conto_corrente_id
 from utils.decorators import cliente_auth_required, cliente_unauth_required
 from utils.storage import save_file
-from .forms import BonificoForm, LoginForm, AccountForm, PrestitoForm
+from .forms import BonificoForm, LoginForm, AccountForm, PrestitoForm, RicaricaCartaForm
 
 
 cliente_page = Blueprint('cliente', __name__, template_folder="templates")
@@ -254,63 +254,6 @@ def bonifico():
     return redirect(url)
 
 
-@cliente_page.route('/prestiti', methods=['GET', 'POST'])
-@cliente_auth_required
-def prestiti():
-    form = PrestitoForm()
-
-    # find conto correnti of current user
-    conto_correnti = db.session.query(ContoCorrente).where(
-        (ContoCorrente.cliente1_id == session['cliente']['id']) | (
-            ContoCorrente.cliente2_id == session['cliente']['id'])
-    ).all()
-    form.conto_corrente_id.choices = [(c.id, c.iban) for c in conto_correnti]
-
-    if form.validate_on_submit():
-        # create the prestito
-        prestito = Prestito()
-        prestito.importo = form.importo.data
-        prestito.cliente_id = session['cliente']['id']
-
-        # check if selected conto corrente is owned by cliente
-        if form.conto_corrente_id.data in [c.id for c in conto_correnti]:
-            prestito.conto_corrente_id = form.conto_corrente_id.data
-        else:
-            flash("Conto corrente non valido", 'error')
-            return redirect(url_for('cliente.prestiti'))
-
-        db.session.add(prestito)
-        db.session.commit()
-
-        # create each garanzia
-        for garanzia in form.garanzie:
-            g = Garanzia()
-            g.tipologia = garanzia.tipologia.data
-            g.valutazione = garanzia.valutazione.data
-            g.prestito_id = prestito.id
-
-            # save the file
-            file = garanzia.file.data
-            path = save_file(file)
-
-            # set the file path
-            g.file = path  # type: ignore
-
-            db.session.add(g)
-
-        try:
-            db.session.commit()
-            flash('Richiesta di prestito salvata con successo.', 'success')
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error durante il salvataggio: {e}')
-
-    prestiti = Prestito.query.filter_by(
-        cliente_id=session['cliente']['id']).all()
-
-    return render_template('cliente/prestiti.html', prestito_form=form, prestiti=prestiti)
-
-
 @cliente_page.route('/richiesta_carta_prepagata', methods=['POST'])
 @cliente_auth_required
 def richiesta_carta_prepagata():
@@ -376,11 +319,15 @@ def ricarica_carta():
 @cliente_page.route('/carte', methods=['GET'])
 @cliente_auth_required
 def carte():
+    form = RicaricaCartaForm()
+    
     cliente = db.session.query(Cliente).where(
         Cliente.id == session["cliente"]["id"]).first()
     if not cliente:
         flash("Cliente non trovato", "error")
         return redirect(url_for('cliente.logout'))
+    
+    form.conto_corrente_id.choices = [(c.id, c.iban) for c in cliente.conti_correnti]
 
     carte_prepagate = cliente.carte_prepagate
     richieste_in_attesa = db.session.query(RichiestaCartaPrepagata).where(
@@ -391,8 +338,160 @@ def carte():
     return render_template(
         'cliente/carte.html',
         carte_prepagate=carte_prepagate,
-        richieste_in_attesa=richieste_in_attesa
+        richieste_in_attesa=richieste_in_attesa,
+        ricarica_form=form
     )
+
+
+@cliente_page.route('/ricarica_carta_prepagata', methods=['POST'])
+@cliente_auth_required
+def ricarica_carta_prepagata():
+    form = RicaricaCartaForm()
+    
+    cliente = db.session.query(Cliente).where(
+        Cliente.id == session["cliente"]["id"]).first()
+    if not cliente:
+        flash("Cliente non trovato", "error")
+        return redirect(url_for('cliente.logout'))
+    
+    form.conto_corrente_id.choices = [(c.id, c.iban) for c in cliente.conti_correnti]
+
+    if not form.validate_on_submit():
+        flash("Dati non validi", "error")
+        return redirect(url_for('cliente.carte'))
+    
+    conto_corrente = db.session.query(ContoCorrente).where(
+        ContoCorrente.id == form.conto_corrente_id.data
+    ).first()
+    
+    carta_id = form.carta_prepagata_id.data
+    carta = db.session.query(CartaPrepagata).where(
+        CartaPrepagata.id == carta_id,
+        CartaPrepagata.cliente_id == cliente.id
+    ).first()
+    if not carta:
+        flash("Carta non trovata", "error")
+        return redirect(url_for('cliente.carte'))
+        
+    importo = form.importo.data
+    if not importo or importo <= 0:
+        flash("Importo non valido", "error")
+        return redirect(url_for('cliente.carte'))
+    if importo > conto_corrente.saldo: # type: ignore
+        flash("Saldo insufficiente", "error")
+        return redirect(url_for('cliente.carte'))
+    
+    # create the transazione addebito conto
+    tid = TransazioneInterna()
+    tid.conto_corrente_id = conto_corrente.id # type: ignore
+    
+    db.session.add(tid)
+    db.session.flush()
+    db.session.refresh(tid)
+    
+    t = Transazione()
+    t.importo = importo # type: ignore
+    t.descrizione = f'Ricarica carta prepagata {carta.numero}' # type: ignore
+    t.transazione_interna_id = tid.id
+    t.entrata = False # type: ignore
+    
+    db.session.add(t)
+    db.session.flush()
+    db.session.refresh(t)
+    
+    # create the transazione accredito carta
+    tic = TransazioneInterna()
+    tic.carta_prepagata_id = carta.id
+    
+    db.session.add(tic)
+    db.session.flush()
+    db.session.refresh(tic)
+    
+    t2 = Transazione()
+    t2.importo = importo # type: ignore
+    t2.descrizione = f'Ricarica da {conto_corrente.iban}' # type: ignore
+    t2.transazione_interna_id = tic.id
+    t2.entrata = True # type: ignore
+    t2.transazione_id = t.id
+    
+    db.session.add(t2)
+    db.session.flush()
+    db.session.refresh(t2)
+    
+    t.transazione_id = t2.id
+    db.session.add(t)
+    
+    carta.saldo = carta.saldo + importo
+    db.session.add(carta)
+    
+    conto_corrente.saldo = conto_corrente.saldo - importo # type: ignore
+    db.session.add(conto_corrente)
+    
+    try:
+        db.session.commit()
+        flash('Ricarica effettuata con successo.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error durante la ricarica: {e}', 'error')
+        
+    return redirect(url_for('cliente.carte'))
+
+
+@cliente_page.route('/prestiti', methods=['GET', 'POST'])
+@cliente_auth_required
+def prestiti():
+    form = PrestitoForm()
+
+    # find conto correnti of current user
+    conto_correnti = db.session.query(ContoCorrente).where(
+        (ContoCorrente.cliente1_id == session['cliente']['id']) | (
+            ContoCorrente.cliente2_id == session['cliente']['id'])
+    ).all()
+    form.conto_corrente_id.choices = [(c.id, c.iban) for c in conto_correnti]
+
+    if form.validate_on_submit():
+        # create the prestito
+        prestito = Prestito()
+        prestito.importo = form.importo.data
+        prestito.cliente_id = session['cliente']['id']
+
+        # check if selected conto corrente is owned by cliente
+        if form.conto_corrente_id.data in [c.id for c in conto_correnti]:
+            prestito.conto_corrente_id = form.conto_corrente_id.data
+        else:
+            flash("Conto corrente non valido", 'error')
+            return redirect(url_for('cliente.prestiti'))
+
+        db.session.add(prestito)
+        db.session.commit()
+
+        # create each garanzia
+        for garanzia in form.garanzie:
+            g = Garanzia()
+            g.tipologia = garanzia.tipologia.data
+            g.valutazione = garanzia.valutazione.data
+            g.prestito_id = prestito.id
+
+            # save the file
+            file = garanzia.file.data
+            path = save_file(file)
+
+            # set the file path
+            g.file = path  # type: ignore
+
+            db.session.add(g)
+
+        try:
+            db.session.commit()
+            flash('Richiesta di prestito salvata con successo.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error durante il salvataggio: {e}')
+
+    prestiti = Prestito.query.filter_by(
+        cliente_id=session['cliente']['id']).all()
+
+    return render_template('cliente/prestiti.html', prestito_form=form, prestiti=prestiti)
 
 
 @cliente_page.route('/account', methods=['GET', 'POST'])

@@ -43,7 +43,7 @@ def get_routes_for(name: str, routes_list: list[str]):
 
 @app.context_processor
 def cliente_routes():
-    routes = get_routes_for('cliente', ["dashboard", "prestiti", "carte", "account"])
+    routes = get_routes_for('cliente', ["dashboard", "carte", "prestiti", "account"])
     return dict(cliente_routes=routes)
 
 

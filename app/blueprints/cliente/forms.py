@@ -39,6 +39,7 @@ class BonificoForm(FlaskForm):
     submit = SubmitField('Invia')
     
 class RicaricaCartaForm(FlaskForm):
+    carta_prepagata_id = HiddenField('Carta Prepagata', validators=[DataRequired()])
     importo = IntegerField('Importo', validators=[DataRequired(), NumberRange(min=0)])
     conto_corrente_id = SelectField('Conto Corrente', coerce=int)
-    submit = SubmitField('Richiedi')
+    submit = SubmitField('Ricarica')
