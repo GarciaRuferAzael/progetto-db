@@ -231,7 +231,7 @@ class Prestito(db.Model):
     data_accettazione = Column('data_accettazione', DateTime, nullable=True)
     accettata = Column('accettata', Boolean, nullable=True)
     cliente_id = Column('cliente_id', Integer, ForeignKey("clienti.id"))
-    conto_corrente_id = Column('conto_corrent_id', Integer, ForeignKey("conti_correnti.id"))
+    conto_corrente_id = Column('conto_corrente_id', Integer, ForeignKey("conti_correnti.id"))
     direttore_id = Column('direttore_id', Integer, ForeignKey("direttori.id"), nullable=True)
 
     garanzie = relationship('Garanzia', lazy=True)
