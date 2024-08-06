@@ -21,7 +21,7 @@ def get_transazioni_by_conto_corrente_id(conto_corrente_id):
         FROM transazioni t
         JOIN transazioni_interne ti ON t.transazione_interna_id = ti.id
         WHERE ti.conto_corrente_id = :conto_corrente_id
-        ORDER BY t.data;
+        ORDER BY t.data DESC;
     """)
     result = db.session.execute(query, {'conto_corrente_id': conto_corrente_id})
     return [item for item in result.fetchall()]
