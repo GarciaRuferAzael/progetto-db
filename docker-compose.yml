@@ -3,7 +3,7 @@ version: "3.7"
 services:
   backend:
     container_name: banca-backend
-    image: banca-backend:${IMAGE_TAG}
+    image: banca-backend:latest
     restart: unless-stopped
     networks:
       - banca-net
