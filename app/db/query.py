@@ -1,5 +1,4 @@
 from datetime import datetime
-from flask import cli
 from sqlalchemy import text
 from . import Cliente, Filiale, StoricoDirezione, db
 
