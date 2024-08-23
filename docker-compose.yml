@@ -15,7 +15,7 @@ services:
     env_file:
       - ./app/.env
     environment:
-      - SECRET_KEY=4289a6d136882c1107bda3b8493afe49807beeded77648f5a489a84c001a4e98
+      - SECRET_KEY=changeme
       - DATABASE_URL="mysql+pymysql://root:banca1557!@banca-db/banca?charset=utf8mb4"
 
   mysql:

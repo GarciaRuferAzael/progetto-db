@@ -1,6 +1,6 @@
 1. Copiare il file .env.example e rinominarlo in .env
 
-2. Cambiare le credenziali presenti nel file .env
+2. Cambiare le credenziali presenti nei file .env e docker-compose.yml
 
 3. Buildare l'immagine del backend
 docker build -t banca-backend .
