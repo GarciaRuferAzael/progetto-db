@@ -6,8 +6,8 @@ WORKDIR /app/
 ADD ./app/requirements.txt /app/requirements.txt
 RUN pip install -r requirements.txt
 
-ADD ./app/ /app
+ADD ./app/ /app/
 
 ENV PYTHONUNBUFFERED=1
 
-ENTRYPOINT [ "flask",  "--app", "app", "run" ]
+ENTRYPOINT [ "flask", "--app", "/app/app", "run", "--host=0.0.0.0", "--port=5000" ]
