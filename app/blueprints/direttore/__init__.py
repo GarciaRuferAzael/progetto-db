@@ -223,4 +223,4 @@ def account():
                 db.session.rollback()
                 flash(f'Error durante l\'aggiornamento: {e}', 'error')
 
-    return render_template('bancario/account.html', account_form=form)
+    return render_template('direttore/account.html', account_form=form)

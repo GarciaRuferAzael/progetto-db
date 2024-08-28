@@ -1,0 +1,22 @@
+{% extends 'direttore/direttore_base.html' %}
+{% from 'macros/form.html' import form %}
+
+{% block header %}
+<h1>{% block title %}Account{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div class="half-container">
+    <div class="container">
+        <h3>Modifica account</h3>
+        {{ form(account_form, 'direttore.account', form_class="flex-flow-wrap", group_class="w-48",
+        default_values=session["direttore"]) }}
+    </div>
+
+    <!-- logout button -->
+    <div class="container mt-5">
+        <h3>Azioni</h3>
+        <a href="{{ url_for('direttore.logout') }}" class="btn btn-danger w-100">Logout</a>
+    </div>
+</div>
+{% endblock %}

@@ -24,7 +24,7 @@
                     <h6>Garanzie</h6>
                     <ul>
                         {% for garanzia in prestito.garanzie %}
-                        <li><a href="{{ url_for('direttore.garanzia', garanzia_id=garanzia.id) }}">{{ garanzia.tipologia }}: {{ garanzia.valutazione }}&euro;</a></li>
+                        <li><a href="{{ url_for('direttore.garanzia', garanzia_id=garanzia.id) }}">{{ garanzia.tipologia }}</a>: {{ garanzia.valutazione }}&euro;</li>
                         {% endfor %}
                     </ul>
 

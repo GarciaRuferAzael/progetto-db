@@ -260,15 +260,6 @@ CREATE TABLE `garanzie` (
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `garanzie`
---
-
-LOCK TABLES `garanzie` WRITE;
-/*!40000 ALTER TABLE `garanzie` DISABLE KEYS */;
-INSERT INTO `garanzie` VALUES (6,'documento di propietà di immobile','uploads/1722347715_594559.jpeg',1000,6,NULL);
-/*!40000 ALTER TABLE `garanzie` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `mutui`
